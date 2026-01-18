@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { validate } from './env';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmConfigService } from './database/typeorm-config-service';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true, validate })],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, validate }),
+    TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
+  ],
   controllers: [],
   providers: [],
 })
