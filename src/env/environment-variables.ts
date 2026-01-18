@@ -12,7 +12,7 @@ export class EnvironmentVariables {
   @IsNumber()
   @Min(0)
   @Max(65535)
-  APP_PORT: number;
+  APP_PORT?: number;
 
   @IsNotEmpty()
   @IsUrl({ require_tld: false })
