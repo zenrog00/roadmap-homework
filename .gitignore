@@ -1,0 +1,16 @@
+# Modules/build files
+node_modules/
+build/
+dist/
+# Environment files
+.env*
+!.env.example
+# VSCode files
+.vs/
+*.code-workspace
+.vscode/
+# Archives
+*.zip
+*.rar
+*.7z
+*.tar
