@@ -3,10 +3,8 @@ services:
     image: postgres:18-trixie
     restart: always
     container_name: roadmap-homework-db
-    env_file:
-      - ./roadmap-homework/.env
     ports:
-      - "{POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
