@@ -1,5 +1,5 @@
 import {
-  IsDate,
+  IsDateString,
   IsEmail,
   IsNotEmpty,
   IsString,
@@ -18,7 +18,7 @@ export class UserDto {
   @IsNotEmpty()
   password: string;
 
-  @IsDate()
+  @IsDateString()
   birthdate: Date;
 
   @MaxLength(1000)
