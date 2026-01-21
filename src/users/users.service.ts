@@ -12,7 +12,7 @@ export class UsersService {
   ) {}
 
   async saveUser(userDto: UserDto) {
-    const res = await this.usersRepository.save(userDto);
-    console.log(res);
+    const { id } = await this.usersRepository.save(userDto);
+    return id;
   }
 }
