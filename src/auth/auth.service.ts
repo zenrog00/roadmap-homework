@@ -1,19 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserDto } from './common/dtos';
 import { v4 as uuidv4 } from 'uuid';
-import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
-import type { AuthModuleOptions } from './common/options';
+import { UserDto } from 'src/users/dtos';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @Inject(AUTH_MODULE_OPTIONS)
-    private readonly authModuleOptions: AuthModuleOptions,
+    private readonly usersService: UsersService,
   ) {}
 
-  registerUser(userDto: UserDto) {
+  async registerUser(userDto: UserDto) {
+    await this.usersService.saveUser(userDto);
     const payload = { sub: uuidv4(), username: userDto.username };
     return {
       accessToken: this.jwtService.sign(payload),

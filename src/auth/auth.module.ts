@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { EnvironmentVariables } from 'src/env';
 import { ConfigService } from '@nestjs/config';
 import { ConfigurableAuthModule } from './auth.module-definition';
+import { UsersModule } from 'src/users';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ConfigurableAuthModule } from './auth.module-definition';
         },
       }),
     }),
+    UsersModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],

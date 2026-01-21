@@ -6,11 +6,11 @@ import {
   Res,
   Inject,
 } from '@nestjs/common';
-import { UserDto } from './common/dtos';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
-import type { AuthModuleOptions } from './common/options';
+import type { AuthModuleOptions } from './auth.module-options';
+import { UserDto } from 'src/users/dtos';
 
 @Controller('auth')
 export class AuthController {
@@ -21,12 +21,12 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  registerUser(
+  async registerUser(
     @Res({ passthrough: true }) response: Response,
     @Body(ValidationPipe) userDto: UserDto,
   ) {
     const { accessToken, refreshToken } =
-      this.authService.registerUser(userDto);
+      await this.authService.registerUser(userDto);
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       path: '/auth',
