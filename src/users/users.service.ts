@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserDto } from './dtos';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './data-access/entities';
 import { Repository } from 'typeorm';
+import { PostgresErrorCode } from 'src/database/postgres-error-code';
 
 @Injectable()
 export class UsersService {
@@ -12,7 +13,20 @@ export class UsersService {
   ) {}
 
   async saveUser(userDto: UserDto) {
-    const { id } = await this.usersRepository.save(userDto);
-    return id;
+    try {
+      const { id } = await this.usersRepository.save(userDto);
+      return id;
+    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (err?.code === PostgresErrorCode.UniqueViolation) {
+        throw new BadRequestException(
+          `Username ${userDto.username} already exists!`,
+        );
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      throw new Error(`Unhandled error when saving user: ${err?.message}`, {
+        cause: err,
+      });
+    }
   }
 }
