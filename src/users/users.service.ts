@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserDto } from './dtos';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './data-access/entities';
+import { User } from './entities';
 import { Repository } from 'typeorm';
 import { PostgresErrorCode } from 'src/database/postgres-error-code';
 
