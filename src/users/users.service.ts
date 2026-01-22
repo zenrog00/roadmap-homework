@@ -14,7 +14,9 @@ export class UsersService {
 
   async saveUser(userDto: UserDto) {
     try {
-      const { id } = await this.usersRepository.save(userDto);
+      // Creating user entity to use beforeInsert method
+      const user = this.usersRepository.create(userDto);
+      const { id } = await this.usersRepository.save(user);
       return id;
     } catch (err) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
