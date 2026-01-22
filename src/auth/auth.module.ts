@@ -6,6 +6,8 @@ import { EnvironmentVariables } from 'src/env';
 import { ConfigService } from '@nestjs/config';
 import { ConfigurableAuthModule } from './auth.module-definition';
 import { UsersModule } from 'src/users';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshSession } from './entities';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { UsersModule } from 'src/users';
         },
       }),
     }),
+    TypeOrmModule.forFeature([RefreshSession]),
     UsersModule,
   ],
   controllers: [AuthController],
