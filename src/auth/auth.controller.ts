@@ -5,6 +5,8 @@ import {
   ValidationPipe,
   Res,
   Inject,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
@@ -22,11 +24,16 @@ export class AuthController {
 
   @Post('register')
   async registerUser(
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
     @Res({ passthrough: true }) response: Response,
     @Body(ValidationPipe) userDto: UserDto,
   ) {
-    const { accessToken, refreshToken } =
-      await this.authService.registerUser(userDto);
+    const { accessToken, refreshToken } = await this.authService.registerUser(
+      userDto,
+      ip,
+      userAgent,
+    );
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       path: '/auth',

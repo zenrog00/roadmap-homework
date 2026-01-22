@@ -20,37 +20,53 @@ export class AuthService {
     private readonly authModuleOption: AuthModuleOptions,
   ) {}
 
-  async registerUser(userDto: UserDto) {
-    const { password } = userDto;
-    const hashedPassword = await this.hashPassword(password);
-    const userId = await this.usersService.saveUser({
-      ...userDto,
-      password: hashedPassword,
-    });
-    const refreshToken = await this.createRefreshSession(userId);
+  async registerUser(userDto: UserDto, ip: string, userAgent: string) {
+    const userId = await this.createUser(userDto);
+    const refreshToken = await this.createRefreshSession(userId, ip, userAgent);
     return {
       accessToken: this.generateAccessToken(userId, userDto.username),
       refreshToken,
     };
   }
 
-  private async createRefreshSession(userId: string) {
+  private async createUser(userDto: UserDto) {
+    const { password } = userDto;
+    const hashedPassword = await this.createHash(password);
+    const userId = await this.usersService.saveUser({
+      ...userDto,
+      password: hashedPassword,
+    });
+    return userId;
+  }
+
+  private async createRefreshSession(
+    userId: string,
+    ip: string,
+    userAgent: string,
+  ) {
+    const fingeprint = this.createFingerpint(ip, userAgent);
+    const hashedFingerpint = await this.createHash(fingeprint);
     const refreshSession = this.refreshSessionRepository.create({
       userId,
-      fingeprint: 'test',
+      fingeprint: hashedFingerpint,
       expiresIn: this.authModuleOption.refreshTokenExpiresIn,
     });
     const { id } = await this.refreshSessionRepository.save(refreshSession);
     return id;
   }
 
-  private async hashPassword(password: string) {
+  private async createHash(s: string) {
     const saltOrRounds = 10;
-    return await bcrypt.hash(password, saltOrRounds);
+    return await bcrypt.hash(s, saltOrRounds);
   }
 
   private generateAccessToken(userId: string, username: string) {
     const payload = { sub: userId, username };
     return this.jwtService.sign(payload);
+  }
+
+  private createFingerpint(ip: string, userAgent: string) {
+    const separator = '|';
+    return ip + separator + userAgent;
   }
 }
