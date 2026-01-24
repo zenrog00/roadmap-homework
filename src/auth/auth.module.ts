@@ -8,6 +8,7 @@ import { ConfigurableAuthModule } from './auth.module-definition';
 import { UsersModule } from 'src/users';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshSession } from './entities';
+import { LocalStrategy } from './strategies';
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { RefreshSession } from './entities';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, LocalStrategy],
 })
 export class AuthModule extends ConfigurableAuthModule {}

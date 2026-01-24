@@ -7,12 +7,15 @@ import {
   Inject,
   Ip,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
 import { UserDto } from 'src/users/dtos';
+import { LocalAuthGuard } from './guards';
+import { User } from 'src/common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -34,11 +37,34 @@ export class AuthController {
       ip,
       userAgent,
     );
+    this.createRefreshTokenCookie(response, refreshToken);
+    return { accessToken };
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async loginUser(
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+    @Res({ passthrough: true }) response: Response,
+    @User('id') userId: string,
+    @User('username') username: string,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.loginUser(
+      userId,
+      username,
+      ip,
+      userAgent,
+    );
+    this.createRefreshTokenCookie(response, refreshToken);
+    return { accessToken };
+  }
+
+  private createRefreshTokenCookie(response: Response, refreshToken: string) {
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       path: '/auth',
       maxAge: this.authOptions.refreshTokenExpiresIn,
     });
-    return { accessToken };
   }
 }

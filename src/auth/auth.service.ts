@@ -24,11 +24,29 @@ export class AuthService {
   @Transactional()
   async registerUser(userDto: UserDto, ip: string, userAgent: string) {
     const userId = await this.createUser(userDto);
-    const refreshToken = await this.createRefreshSession(userId, ip, userAgent);
     return {
       accessToken: this.generateAccessToken(userId, userDto.username),
-      refreshToken,
+      refreshToken: await this.createRefreshSession(userId, ip, userAgent),
     };
+  }
+
+  async loginUser(
+    userId: string,
+    username: string,
+    ip: string,
+    userAgent: string,
+  ) {
+    return {
+      accessToken: this.generateAccessToken(userId, username),
+      refreshToken: await this.createRefreshSession(userId, ip, userAgent),
+    };
+  }
+
+  async validateUser(username: string, password: string) {
+    const user = await this.usersService.findByUsername(username);
+    if (user && (await this.compareWithHash(password, user.password))) {
+      return user;
+    }
   }
 
   private async createUser(userDto: UserDto) {
@@ -60,6 +78,10 @@ export class AuthService {
   private async createHash(s: string) {
     const saltOrRounds = 10;
     return await bcrypt.hash(s, saltOrRounds);
+  }
+
+  private async compareWithHash(s: string, hash: string) {
+    return await bcrypt.compare(s, hash);
   }
 
   private generateAccessToken(userId: string, username: string) {
