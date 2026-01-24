@@ -35,4 +35,12 @@ export class UsersService {
   async findByUsername(username: string) {
     return await this.usersRepository.findOneBy({ username });
   }
+
+  async lockUserForUpdate(userId: string) {
+    await this.usersRepository
+      .createQueryBuilder()
+      .setLock('pessimistic_write')
+      .where('id = :userId', { userId })
+      .getOne();
+  }
 }

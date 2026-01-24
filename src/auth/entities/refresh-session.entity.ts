@@ -7,6 +7,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
+  Index,
 } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
 
@@ -29,6 +30,7 @@ export class RefreshSession {
   @JoinColumn({ name: 'userId' })
   user: User;
 
+  @Index()
   @Column('uuid')
   userId: string;
 
