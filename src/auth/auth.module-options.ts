@@ -4,6 +4,7 @@ import { EnvironmentVariables } from 'src/env';
 
 export interface AuthModuleOptions {
   refreshTokenExpiresIn: number;
+  maxUserSessions: number;
 }
 
 @Injectable()
@@ -18,6 +19,9 @@ export class AuthModuleOptionsFactory {
         'REFRESH_TOKEN_EXPIRES_IN',
         { infer: true },
       ),
+      maxUserSessions: this.configService.get('MAX_USER_SESSIONS', {
+        infer: true,
+      }),
     };
   }
 }
