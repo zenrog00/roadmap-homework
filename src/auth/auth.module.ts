@@ -9,6 +9,7 @@ import { UsersModule } from 'src/users';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshSession } from './entities';
 import { LocalStrategy } from './strategies';
+import { RefreshSessionsService } from './refresh-sessions.service';
 
 @Module({
   imports: [
@@ -29,6 +30,6 @@ import { LocalStrategy } from './strategies';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy],
+  providers: [AuthService, RefreshSessionsService, LocalStrategy],
 })
 export class AuthModule extends ConfigurableAuthModule {}
