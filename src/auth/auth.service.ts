@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +21,7 @@ export class AuthService {
     private readonly authModuleOption: AuthModuleOptions,
   ) {}
 
+  @Transactional()
   async registerUser(userDto: UserDto, ip: string, userAgent: string) {
     const userId = await this.createUser(userDto);
     const refreshToken = await this.createRefreshSession(userId, ip, userAgent);
