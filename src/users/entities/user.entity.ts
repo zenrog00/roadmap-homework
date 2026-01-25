@@ -34,6 +34,6 @@ export class User {
   @Column()
   password: string;
 
-  @UpdateDateColumn({ type: 'timestamp with time zone' })
+  @UpdateDateColumn({ type: 'timestamp with time zone', select: false })
   updatedAt: Date;
 }
