@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
 
 export interface AuthModuleOptions {
+  jwtSecret: string;
   refreshTokenExpiresIn: number;
   maxUserSessions: number;
 }
@@ -15,6 +16,7 @@ export class AuthModuleOptionsFactory {
 
   createAuthModuleOptions(): AuthModuleOptions {
     return {
+      jwtSecret: this.configService.get('JWT_SECRET', { infer: true }),
       refreshTokenExpiresIn: this.configService.get(
         'REFRESH_TOKEN_EXPIRES_IN',
         { infer: true },
