@@ -8,8 +8,10 @@ import { ConfigurableAuthModule } from './auth.module-definition';
 import { UsersModule } from 'src/users';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshSession } from './entities';
-import { LocalStrategy } from './strategies';
+import { JwtStrategy, LocalStrategy } from './strategies';
 import { RefreshSessionsService } from './refresh-sessions.service';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './guards';
 
 @Module({
   imports: [
@@ -30,6 +32,12 @@ import { RefreshSessionsService } from './refresh-sessions.service';
     UsersModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, RefreshSessionsService, LocalStrategy],
+  providers: [
+    AuthService,
+    RefreshSessionsService,
+    LocalStrategy,
+    JwtStrategy,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+  ],
 })
 export class AuthModule extends ConfigurableAuthModule {}
