@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/users/dtos';
 import { UsersService } from 'src/users/users.service';
@@ -33,6 +33,38 @@ export class AuthService {
     ip: string,
     userAgent: string,
   ) {
+    return {
+      accessToken: this.generateAccessToken(userId, username),
+      refreshToken: await this.refreshSessionsService.createSession(
+        userId,
+        ip,
+        userAgent,
+      ),
+    };
+  }
+
+  @Transactional()
+  async refreshTokens(ip: string, userAgent: string, refreshToken?: string) {
+    // there are two possibilities:
+    // 1. session expired and has same fingerpint, so it's valid
+    // 2. session expired or has different fingerpint (it was probably stolen), so it's not valid
+    // in both cases session should be deleted and replaced
+    const refreshSession =
+      await this.refreshSessionsService.findAndDeleteSession(refreshToken);
+    const validatedRefreshSession =
+      await this.refreshSessionsService.validateSession(
+        refreshSession,
+        ip,
+        userAgent,
+      );
+    if (!validatedRefreshSession) {
+      throw new UnauthorizedException('Invalid or expired refresh token!');
+    }
+
+    const {
+      user: { id: userId, username },
+    } = validatedRefreshSession;
+
     return {
       accessToken: this.generateAccessToken(userId, username),
       refreshToken: await this.refreshSessionsService.createSession(

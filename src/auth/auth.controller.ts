@@ -10,12 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
 import { UserDto } from 'src/users/dtos';
 import { LocalAuthGuard } from './guards';
-import { User } from 'src/common/decorators';
+import { Cookie, User } from 'src/common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -58,6 +58,22 @@ export class AuthController {
     );
     this.createRefreshTokenCookie(response, refreshToken);
     return { accessToken };
+  }
+
+  @Post('refresh-tokens')
+  async refreshTokens(
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+    @Res({ passthrough: true }) response: Response,
+    @Cookie('refreshToken') refreshToken?: string,
+  ) {
+    const tokens = await this.authService.refreshTokens(
+      ip,
+      userAgent,
+      refreshToken,
+    );
+    this.createRefreshTokenCookie(response, tokens.refreshToken);
+    return { accessToken: tokens.accessToken };
   }
 
   private createRefreshTokenCookie(response: Response, refreshToken: string) {

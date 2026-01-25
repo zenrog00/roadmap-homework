@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createHash } from 'src/common/utils/hash';
+import { compareWithHash, createHash } from 'src/common/utils/hash';
 import { Repository } from 'typeorm';
 import { RefreshSession } from './entities';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
@@ -39,6 +39,47 @@ export class RefreshSessionsService {
     });
     const { id } = await this.refreshSessionRepository.save(refreshSession);
     return id;
+  }
+
+  @Transactional()
+  async findAndDeleteSession(id?: string) {
+    if (!id) {
+      return null;
+    }
+    const session = await this.findSessionById(id);
+    if (session) {
+      await this.refreshSessionRepository.delete(session.id);
+    }
+    return session;
+  }
+
+  async validateSession(
+    session: RefreshSession | null,
+    ip: string,
+    userAgent: string,
+  ) {
+    if (session) {
+      const newFingerpint = this.createFingerpint(ip, userAgent);
+      if (
+        !this.isSessionExpired(session) &&
+        (await compareWithHash(newFingerpint, session.fingeprint))
+      ) {
+        return session;
+      }
+    }
+  }
+
+  isSessionExpired({ expiresIn, createdAt }: RefreshSession) {
+    const createdAtTime = createdAt.getTime();
+    const currentTime = Date.now();
+    return currentTime > createdAtTime + expiresIn;
+  }
+
+  private async findSessionById(id?: string) {
+    return await this.refreshSessionRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
   }
 
   private async countActiveSessions(userId: string) {
