@@ -10,12 +10,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
 import { UserDto } from 'src/users/dtos';
 import { LocalAuthGuard } from './guards';
 import { Cookie, User } from 'src/common/decorators';
+import { Public } from './decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -25,6 +26,7 @@ export class AuthController {
     private readonly authOptions: AuthModuleOptions,
   ) {}
 
+  @Public()
   @Post('register')
   async registerUser(
     @Ip() ip: string,
@@ -41,6 +43,7 @@ export class AuthController {
     return { accessToken };
   }
 
+  @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async loginUser(
@@ -60,6 +63,7 @@ export class AuthController {
     return { accessToken };
   }
 
+  @Public()
   @Post('refresh-tokens')
   async refreshTokens(
     @Ip() ip: string,
