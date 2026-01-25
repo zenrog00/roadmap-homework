@@ -6,6 +6,7 @@ import {
   Max,
   IsOptional,
 } from 'class-validator';
+import { StringValue } from 'ms';
 
 export class EnvironmentVariables {
   @IsOptional()
@@ -35,7 +36,7 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   JWT_SECRET: string;
 
-  ACCESS_TOKEN_EXPIRES_IN = 15 * 60 * 1000; // 15m
-  REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 60 * 60 * 1000; // 30d
+  ACCESS_TOKEN_EXPIRES_IN: StringValue = '15m';
+  REFRESH_TOKEN_EXPIRES_IN: StringValue = '30d';
   MAX_USER_SESSIONS = 5;
 }
