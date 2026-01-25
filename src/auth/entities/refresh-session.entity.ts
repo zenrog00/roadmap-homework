@@ -2,7 +2,6 @@ import { User } from 'src/users/entities';
 import {
   BeforeInsert,
   Column,
-  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -17,10 +16,17 @@ export class RefreshSession {
   id: string;
 
   @BeforeInsert()
-  generateId() {
+  prepareEntity() {
     if (!this.id) {
       this.id = uuidv7();
     }
+    // generating expiresAt and createdAt to prevent
+    // milliseconds mismatch when generating createdAt as
+    // transaction CURRENT_TIMESTAMP and calculating expiresAt
+    // using Date object methods
+    const now = new Date();
+    this.createdAt = now;
+    this.expiresAt = new Date(now.getTime() + this.expiresIn);
   }
 
   @ManyToOne(() => User, {
@@ -40,6 +46,10 @@ export class RefreshSession {
   @Column('bigint')
   expiresIn: number;
 
-  @CreateDateColumn({ type: 'timestamp with time zone' })
+  @Index()
+  @Column('timestamp with time zone')
+  expiresAt: Date;
+
+  @Column('timestamp with time zone')
   createdAt: Date;
 }
