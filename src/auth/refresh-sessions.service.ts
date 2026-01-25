@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compareWithHash, createHash } from 'src/common/utils/hash';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { RefreshSession } from './entities';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
@@ -46,7 +46,7 @@ export class RefreshSessionsService {
     if (!id) {
       return null;
     }
-    const session = await this.findSessionById(id);
+    const session = await this.findOneBy({ id });
     if (session) {
       await this.refreshSessionRepository.delete(session.id);
     }
@@ -75,9 +75,9 @@ export class RefreshSessionsService {
     return currentTime > createdAtTime + expiresIn;
   }
 
-  private async findSessionById(id?: string) {
+  private async findOneBy(opts: FindOptionsWhere<RefreshSession>) {
     return await this.refreshSessionRepository.findOne({
-      where: { id },
+      where: opts,
       relations: { user: true },
     });
   }
@@ -86,9 +86,7 @@ export class RefreshSessionsService {
     return await this.refreshSessionRepository
       .createQueryBuilder()
       .where('"userId" = :userId', { userId })
-      .andWhere(
-        `"createdAt" + ("expiresIn" || ' milliseconds')::interval > now()`,
-      )
+      .andWhere('"expiresAt" > now()')
       .getCount();
   }
 
@@ -104,9 +102,7 @@ export class RefreshSessionsService {
     return await this.refreshSessionRepository
       .createQueryBuilder()
       .where('"userId" = :userId', { userId })
-      .andWhere(
-        `"createdAt" + ("expiresIn" || ' milliseconds')::interval > now()`,
-      )
+      .andWhere('"expiresAt" > now()')
       .orderBy('"createdAt"', 'ASC')
       .limit(1)
       .getOne();
