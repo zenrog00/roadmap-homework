@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserDto } from './dtos';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { PostgresErrorCode } from 'src/database/postgres-error-code';
 
 @Injectable()
@@ -32,8 +32,8 @@ export class UsersService {
     }
   }
 
-  async findByUsername(username: string) {
-    return await this.usersRepository.findOneBy({ username });
+  async findOneBy(opts: FindOptionsWhere<User>) {
+    return await this.usersRepository.findOneBy(opts);
   }
 
   async lockUserForUpdate(userId: string) {
