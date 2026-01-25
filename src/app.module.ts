@@ -7,6 +7,7 @@ import { AuthModule, AuthModuleOptionsFactory } from './auth';
 import { UsersModule } from './users/users.module';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { DataSource } from 'typeorm';
         return addTransactionalDataSource(new DataSource(options!));
       },
     }),
+    ScheduleModule.forRoot(),
     AuthModule.forRootAsync({ useClass: AuthModuleOptionsFactory }),
     UsersModule,
   ],

@@ -1,12 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compareWithHash, createHash } from 'src/common/utils/hash';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, LessThan, Repository } from 'typeorm';
 import { RefreshSession } from './entities';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
 import { UsersService } from 'src/users/users.service';
 import { Transactional } from 'typeorm-transactional';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class RefreshSessionsService {
@@ -73,6 +74,16 @@ export class RefreshSessionsService {
     const createdAtTime = createdAt.getTime();
     const currentTime = Date.now();
     return currentTime > createdAtTime + expiresIn;
+  }
+
+  // every day at 01:00 Moscow
+  @Cron('0 1 * * *', {
+    timeZone: 'Europe/Moscow',
+  })
+  async deleteExpiredSessions() {
+    await this.refreshSessionRepository.delete({
+      expiresAt: LessThan(new Date()),
+    });
   }
 
   private async findOneBy(opts: FindOptionsWhere<RefreshSession>) {
