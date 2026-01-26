@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
 
@@ -17,5 +17,12 @@ export class UsersController {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, id, ...userData } = user;
     return userData;
+  }
+
+  @Get()
+  async getUsers(@Query('username') username?: string) {
+    const users = await this.usersService.findAll(username);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return users.map(({ password, ...userData }) => userData);
   }
 }

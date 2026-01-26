@@ -36,6 +36,14 @@ export class UsersService {
     return await this.usersRepository.findOneBy(opts);
   }
 
+  async findAll(username?: string) {
+    return await this.usersRepository.find({
+      where: {
+        ...(username && { username }),
+      },
+    });
+  }
+
   async lockUserForUpdate(userId: string) {
     await this.usersRepository
       .createQueryBuilder()
