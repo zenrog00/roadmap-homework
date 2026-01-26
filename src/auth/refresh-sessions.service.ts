@@ -54,8 +54,8 @@ export class RefreshSessionsService {
     return session;
   }
 
-  async deleteSession(id: string) {
-    await this.refreshSessionRepository.delete(id);
+  async deleteSession(opts: FindOptionsWhere<RefreshSession>) {
+    await this.refreshSessionRepository.delete(opts);
   }
 
   async validateSession(

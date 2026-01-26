@@ -86,7 +86,11 @@ export class AuthService {
     if (!refreshToken) {
       throw new UnauthorizedException('Invalid refresh token!');
     }
-    await this.refreshSessionsService.deleteSession(refreshToken);
+    await this.refreshSessionsService.deleteSession({ id: refreshToken });
+  }
+
+  async logoutAllUserSessions(userId: string) {
+    await this.refreshSessionsService.deleteSession({ userId });
   }
 
   private async createUser(userDto: UserDto) {
