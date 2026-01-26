@@ -4,7 +4,7 @@ import { UserDto } from 'src/users/dtos';
 import { UsersService } from 'src/users/users.service';
 import { Transactional } from 'typeorm-transactional';
 import { RefreshSessionsService } from './refresh-sessions.service';
-import { createHash, compareWithHash } from 'src/common/utils/hash';
+import { compareWithHash } from 'src/common/utils/hash';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +16,7 @@ export class AuthService {
 
   @Transactional()
   async registerUser(userDto: UserDto, ip: string, userAgent: string) {
-    const userId = await this.createUser(userDto);
+    const userId = await this.usersService.saveUser(userDto);
     return {
       accessToken: this.generateAccessToken(userId, userDto.username),
       refreshToken: await this.refreshSessionsService.createSession(
@@ -91,16 +91,6 @@ export class AuthService {
 
   async logoutAllUserSessions(userId: string) {
     await this.refreshSessionsService.deleteSession({ userId });
-  }
-
-  private async createUser(userDto: UserDto) {
-    const { password } = userDto;
-    const hashedPassword = await createHash(password);
-    const userId = await this.usersService.saveUser({
-      ...userDto,
-      password: hashedPassword,
-    });
-    return userId;
   }
 
   private generateAccessToken(userId: string, username: string) {

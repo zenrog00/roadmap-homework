@@ -1,13 +1,15 @@
 import {
+  Body,
   Controller,
   Get,
   NotFoundException,
+  Put,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
-import { GetUsersQueryDto } from './dtos';
+import { GetUsersQueryDto, UserDto } from './dtos';
 
 @Controller('users')
 export class UsersController {
@@ -36,5 +38,13 @@ export class UsersController {
       data: data.map(({ password, ...userData }) => userData),
       ...cursors,
     };
+  }
+
+  @Put('my')
+  async updateMyUser(
+    @User('id') userId: string,
+    @Body(ValidationPipe) userDto: UserDto,
+  ) {
+    await this.usersService.updateUser(userId, userDto);
   }
 }

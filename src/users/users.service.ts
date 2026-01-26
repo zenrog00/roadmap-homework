@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { PostgresErrorCode } from 'src/database/postgres-error-code';
+import { createHash } from 'src/common/utils/hash';
 
 @Injectable()
 export class UsersService {
@@ -14,8 +15,13 @@ export class UsersService {
 
   async saveUser(userDto: UserDto) {
     try {
+      const { password } = userDto;
+      const hashedPassword = await createHash(password);
       // Creating user entity to use beforeInsert method
-      const user = this.usersRepository.create(userDto);
+      const user = this.usersRepository.create({
+        ...userDto,
+        password: hashedPassword,
+      });
       const { id } = await this.usersRepository.save(user);
       return id;
     } catch (err) {
@@ -81,5 +87,28 @@ export class UsersService {
       .setLock('pessimistic_write')
       .where('id = :userId', { userId })
       .getOne();
+  }
+
+  async updateUser(userId: string, userDto: UserDto) {
+    try {
+      const { password } = userDto;
+      const hashedPassword = await createHash(password);
+      await this.usersRepository.save({
+        ...userDto,
+        id: userId,
+        password: hashedPassword,
+      });
+    } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (err?.code === PostgresErrorCode.UniqueViolation) {
+        throw new BadRequestException(
+          `Username ${userDto.username} already exists!`,
+        );
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      throw new Error(`Unhandled error when updating user: ${err?.message}`, {
+        cause: err,
+      });
+    }
   }
 }
