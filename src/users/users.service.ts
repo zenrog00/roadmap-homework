@@ -36,30 +36,42 @@ export class UsersService {
     return await this.usersRepository.findOneBy(opts);
   }
 
-  async findAll({ username, cursor, limit }: GetUsersQueryDto) {
+  async findAll({ username, cursor, limit, isPrevious }: GetUsersQueryDto) {
     const queryBuilder = this.usersRepository.createQueryBuilder();
     if (username) {
       queryBuilder.where('username = :username', { username });
     }
     if (cursor) {
-      queryBuilder.where('id < :cursor', { cursor });
+      const operator = isPrevious ? '>' : '<';
+      queryBuilder.andWhere(`id ${operator} :cursor`, { cursor });
     }
 
     const users = await queryBuilder
-      .orderBy('id', 'DESC')
+      .orderBy('id', isPrevious ? 'ASC' : 'DESC')
       .limit(limit + 1)
       .getMany();
 
-    let nextCursor: string | undefined;
-    const hasNextPage = users.length > limit;
-    if (hasNextPage) {
+    const hasMore = users.length > limit;
+    if (hasMore) {
       users.pop();
-      nextCursor = users.at(-1)?.id;
+    }
+
+    const data = isPrevious ? users.reverse() : users;
+
+    let nextCursor: string | undefined;
+    let prevCursor: string | undefined;
+    if (isPrevious) {
+      prevCursor = hasMore ? data[0]?.id : undefined;
+      nextCursor = data.at(-1)?.id;
+    } else {
+      nextCursor = hasMore ? data.at(-1)?.id : undefined;
+      prevCursor = cursor && data.at(0)?.id;
     }
 
     return {
-      data: users,
+      data,
       nextCursor,
+      prevCursor,
     };
   }
 

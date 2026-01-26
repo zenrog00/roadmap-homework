@@ -8,7 +8,6 @@ import {
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
 import { GetUsersQueryDto } from './dtos';
-import { Public } from 'src/auth/decorators';
 
 @Controller('users')
 export class UsersController {
@@ -27,16 +26,15 @@ export class UsersController {
     return userData;
   }
 
-  @Public()
   @Get()
   async getUsers(
     @Query(new ValidationPipe({ transform: true })) query: GetUsersQueryDto,
   ) {
-    const { data, nextCursor } = await this.usersService.findAll(query);
+    const { data, ...cursors } = await this.usersService.findAll(query);
     return {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       data: data.map(({ password, ...userData }) => userData),
-      nextCursor,
+      ...cursors,
     };
   }
 }

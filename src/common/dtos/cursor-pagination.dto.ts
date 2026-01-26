@@ -18,4 +18,8 @@ export class CursorPaginationDto {
   @IsInt()
   @IsPositive()
   limit = 10;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  isPrevious?: boolean;
 }
