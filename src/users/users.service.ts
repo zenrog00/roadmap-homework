@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserDto } from './dtos';
+import { GetUsersQueryDto, UserDto } from './dtos';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities';
 import { FindOptionsWhere, Repository } from 'typeorm';
@@ -36,12 +36,31 @@ export class UsersService {
     return await this.usersRepository.findOneBy(opts);
   }
 
-  async findAll(username?: string) {
-    return await this.usersRepository.find({
-      where: {
-        ...(username && { username }),
-      },
-    });
+  async findAll({ username, cursor, limit }: GetUsersQueryDto) {
+    const queryBuilder = this.usersRepository.createQueryBuilder();
+    if (username) {
+      queryBuilder.where('username = :username', { username });
+    }
+    if (cursor) {
+      queryBuilder.where('id < :cursor', { cursor });
+    }
+
+    const users = await queryBuilder
+      .orderBy('id', 'DESC')
+      .limit(limit + 1)
+      .getMany();
+
+    let nextCursor: string | undefined;
+    const hasNextPage = users.length > limit;
+    if (hasNextPage) {
+      users.pop();
+      nextCursor = users.at(-1)?.id;
+    }
+
+    return {
+      data: users,
+      nextCursor,
+    };
   }
 
   async lockUserForUpdate(userId: string) {

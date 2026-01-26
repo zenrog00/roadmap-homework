@@ -1,6 +1,14 @@
-import { Controller, Get, NotFoundException, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Query,
+  ValidationPipe,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
+import { GetUsersQueryDto } from './dtos';
+import { Public } from 'src/auth/decorators';
 
 @Controller('users')
 export class UsersController {
@@ -19,10 +27,16 @@ export class UsersController {
     return userData;
   }
 
+  @Public()
   @Get()
-  async getUsers(@Query('username') username?: string) {
-    const users = await this.usersService.findAll(username);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return users.map(({ password, ...userData }) => userData);
+  async getUsers(
+    @Query(new ValidationPipe({ transform: true })) query: GetUsersQueryDto,
+  ) {
+    const { data, nextCursor } = await this.usersService.findAll(query);
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      data: data.map(({ password, ...userData }) => userData),
+      nextCursor,
+    };
   }
 }
