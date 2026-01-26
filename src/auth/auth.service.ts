@@ -82,6 +82,13 @@ export class AuthService {
     }
   }
 
+  async logoutUserSession(refreshToken?: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Invalid refresh token!');
+    }
+    await this.refreshSessionsService.deleteSession(refreshToken);
+  }
+
   private async createUser(userDto: UserDto) {
     const { password } = userDto;
     const hashedPassword = await createHash(password);

@@ -80,6 +80,11 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  @Post('logout')
+  async logoutUserSession(@Cookie('refreshToken') refreshToken?: string) {
+    await this.authService.logoutUserSession(refreshToken);
+  }
+
   private createRefreshTokenCookie(response: Response, refreshToken: string) {
     response.cookie('refreshToken', refreshToken, {
       httpOnly: true,

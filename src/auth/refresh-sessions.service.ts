@@ -54,6 +54,10 @@ export class RefreshSessionsService {
     return session;
   }
 
+  async deleteSession(id: string) {
+    await this.refreshSessionRepository.delete(id);
+  }
+
   async validateSession(
     session: RefreshSession | null,
     ip: string,
