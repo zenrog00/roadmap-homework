@@ -5,6 +5,7 @@ import { User } from './entities';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { PostgresErrorCode } from 'src/database/postgres-error-code';
 import { createHash } from 'src/common/utils/hash';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class UsersService {
@@ -114,5 +115,18 @@ export class UsersService {
 
   async deleteUser(userId: string) {
     await this.usersRepository.softDelete(userId);
+  }
+
+  // every day at midnight Moscow
+  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
+  private async deleteSoftDeletedUsers() {
+    const oneWeekAgo = "now() - interval '7 days'";
+    await this.usersRepository
+      .createQueryBuilder()
+      .delete()
+      .from(User)
+      .where('"deletedAt" is not null')
+      .andWhere(`"deletedAt" <= ${oneWeekAgo}`)
+      .execute();
   }
 }

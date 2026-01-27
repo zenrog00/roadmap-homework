@@ -87,7 +87,7 @@ export class RefreshSessionsService {
   @Cron('0 1 * * *', {
     timeZone: 'Europe/Moscow',
   })
-  async deleteExpiredSessions() {
+  private async deleteExpiredSessions() {
     await this.refreshSessionRepository.delete({
       expiresAt: LessThan(new Date()),
     });
