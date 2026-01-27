@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compareWithHash, createHash } from 'src/common/utils/hash';
-import { FindOptionsWhere, LessThan, Repository } from 'typeorm';
+import { FindOptionsWhere, IsNull, LessThan, Repository } from 'typeorm';
 import { RefreshSession } from './entities';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
@@ -48,10 +48,13 @@ export class RefreshSessionsService {
       return null;
     }
     const session = await this.findOneBy({ id });
-    if (session) {
+    // findOne uses leftJoin when querying relations
+    // so we need to check session.user also
+    if (session && session.user) {
       await this.refreshSessionRepository.delete(session.id);
+      return session;
     }
-    return session;
+    return null;
   }
 
   async deleteSession(opts: FindOptionsWhere<RefreshSession>) {
@@ -92,16 +95,22 @@ export class RefreshSessionsService {
 
   private async findOneBy(opts: FindOptionsWhere<RefreshSession>) {
     return await this.refreshSessionRepository.findOne({
-      where: opts,
+      where: {
+        ...opts,
+        user: {
+          deletedAt: IsNull(),
+        },
+      },
       relations: { user: true },
     });
   }
 
   private async countActiveSessions(userId: string) {
     return await this.refreshSessionRepository
-      .createQueryBuilder()
-      .where('"userId" = :userId', { userId })
-      .andWhere('"expiresAt" > now()')
+      .createQueryBuilder('session')
+      .innerJoin('session.user', 'user')
+      .where('session.userId = :userId', { userId })
+      .andWhere('session.expiresAt > now()')
       .getCount();
   }
 
@@ -115,10 +124,11 @@ export class RefreshSessionsService {
 
   private async findEarliestActiveSession(userId: string) {
     return await this.refreshSessionRepository
-      .createQueryBuilder()
-      .where('"userId" = :userId', { userId })
-      .andWhere('"expiresAt" > now()')
-      .orderBy('"createdAt"', 'ASC')
+      .createQueryBuilder('session')
+      .innerJoin('session.user', 'user')
+      .where('session.userId = :userId', { userId })
+      .andWhere('session.expiresAt > now()')
+      .orderBy('session.createdAt', 'ASC')
       .limit(1)
       .getOne();
   }
