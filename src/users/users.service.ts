@@ -111,4 +111,8 @@ export class UsersService {
       });
     }
   }
+
+  async deleteUser(userId: string) {
+    await this.usersRepository.softDelete(userId);
+  }
 }

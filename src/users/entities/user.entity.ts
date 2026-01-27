@@ -1,6 +1,7 @@
 import {
   BeforeInsert,
   Column,
+  DeleteDateColumn,
   Entity,
   PrimaryColumn,
   UpdateDateColumn,
@@ -36,4 +37,7 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamp with time zone', select: false })
   updatedAt: Date;
+
+  @DeleteDateColumn({ type: 'timestamp with time zone', select: false })
+  deletedAt: Date;
 }

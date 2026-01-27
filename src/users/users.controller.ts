@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Put,
@@ -46,5 +47,10 @@ export class UsersController {
     @Body(ValidationPipe) userDto: UserDto,
   ) {
     await this.usersService.updateUser(userId, userDto);
+  }
+
+  @Delete('my')
+  async deleteMyUser(@User('id') userId: string) {
+    await this.usersService.deleteUser(userId);
   }
 }
