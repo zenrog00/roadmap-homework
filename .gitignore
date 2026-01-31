@@ -14,3 +14,5 @@ dist/
 *.rar
 *.7z
 *.tar
+# Test coverage and artifacts
+coverage/
