@@ -26,11 +26,10 @@ export class UsersService {
       const { id } = await this.usersRepository.save(user);
       return id;
     } catch (err) {
+      console.error(err);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (err?.code === PostgresErrorCode.UniqueViolation) {
-        throw new BadRequestException(
-          `Username ${userDto.username} already exists!`,
-        );
+        throw new BadRequestException(`Username or email already exists!`);
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       throw new Error(`Unhandled error when saving user: ${err?.message}`, {
