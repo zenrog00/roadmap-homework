@@ -1,9 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import { AxiosInstance, AxiosResponse } from 'axios';
 import { GetUsersResponseDto, UserDto } from 'src/users/dtos';
-import * as cookie from 'cookie';
 import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
-import { jwtRegex, uuidRegex } from './utils/regex';
+import { uuidRegex } from './utils/regex';
+import {
+  expectValidAccessTokenResponse,
+  expectValidRefreshTokenCookie,
+} from './utils/assertions/auth.assertions';
 
 let app: INestApplication;
 let api: AxiosInstance;
@@ -45,28 +48,11 @@ describe('AUTH', () => {
       });
 
       it('should return JWT accessToken', () => {
-        expect(response.data).toHaveProperty('accessToken');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        expect(typeof response.data.accessToken).toBe('string');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        expect(response.data.accessToken).toMatch(jwtRegex);
+        expectValidAccessTokenResponse(response);
       });
 
       it('should return HttpOnly refreshToken cookie with path /auth', () => {
-        const rawCookie = response.headers['set-cookie']?.[0];
-        expect(rawCookie).toBeDefined();
-        // cookie.parse doesn't parse httpOnly because it doesn't have value
-        expect(rawCookie!.toLowerCase()).toContain('httponly');
-
-        const parsedCookie = cookie.parse(rawCookie!);
-        expect(typeof parsedCookie.refreshToken).toEqual('string');
-        expect(parsedCookie.Path).toEqual('/auth');
-        expect(parsedCookie.Expires).toBeDefined();
-        expect(new Date(parsedCookie.Expires!).getTime()).toBeGreaterThan(
-          Date.now(),
-        );
-
-        expect(parsedCookie.refreshToken).toMatch(uuidRegex);
+        expectValidRefreshTokenCookie(response);
       });
 
       it('should save user to database', async () => {
@@ -150,29 +136,45 @@ describe('AUTH', () => {
       await api.post('/auth/register', userDto);
     });
 
-    it('should return 201 with valid username and password', async () => {
-      const response = await api.post('auth/login', {
-        username: userDto.username,
-        password: userDto.password,
+    describe('valid data', () => {
+      let response: AxiosResponse;
+
+      beforeEach(async () => {
+        response = await api.post('auth/login', {
+          username: userDto.username,
+          password: userDto.password,
+        });
       });
 
-      expect(response.status).toBe(201);
+      it('should return 201 with valid username and password', () => {
+        expect(response.status).toBe(201);
+      });
+
+      it('should return JWT accessToken', () => {
+        expectValidAccessTokenResponse(response);
+      });
+
+      it('should return HttpOnly refreshToken cookie with path /auth', () => {
+        expectValidRefreshTokenCookie(response);
+      });
     });
 
-    it('should return 401 with invalid username', async () => {
-      const response = await api.post('auth/login', {
-        username: 'wrong_user',
-        password: userDto.password,
+    describe('invalid data', () => {
+      it('should return 401 with invalid username', async () => {
+        const response = await api.post('auth/login', {
+          username: 'wrong_user',
+          password: userDto.password,
+        });
+        expect(response.status).toBe(401);
       });
-      expect(response.status).toBe(401);
-    });
 
-    it('should return 401 with invalid password', async () => {
-      const response = await api.post('auth/login', {
-        username: userDto.password,
-        password: userDto.username,
+      it('should return 401 with invalid password', async () => {
+        const response = await api.post('auth/login', {
+          username: userDto.password,
+          password: userDto.username,
+        });
+        expect(response.status).toBe(401);
       });
-      expect(response.status).toBe(401);
     });
   });
 });
