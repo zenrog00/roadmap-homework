@@ -11,5 +11,7 @@
   },
   "transformIgnorePatterns": [
     "/node_modules/(?!uuid)"
-  ]
+  ],
+  "globalSetup": "<rootDir>/test/utils/setup/global-setup.ts",
+  "globalTeardown": "<rootDir>/test/utils/setup/global-teardown.ts"
 }

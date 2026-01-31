@@ -1,66 +1,24 @@
 import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
-import { AppModule } from 'src/app.module';
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from '@testcontainers/postgresql';
-import { TypeOrmConfigService } from 'src/database/typeorm-config-service';
-import {
-  initializeTransactionalContext,
-  StorageDriver,
-} from 'typeorm-transactional';
+import { AxiosInstance, AxiosResponse } from 'axios';
 import { GetUsersResponseDto, UserDto } from 'src/users/dtos';
 import * as cookie from 'cookie';
+import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
 
 let app: INestApplication;
 let api: AxiosInstance;
-let postgresContainer: StartedPostgreSqlContainer;
 
 const uuidRegex =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 beforeAll(async () => {
-  postgresContainer = await new PostgreSqlContainer('postgres:18').start();
-
-  // typeorm-transactional async context initialization
-  initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
-
-  const moduleFixture = await Test.createTestingModule({
-    imports: [AppModule],
-  })
-    .overrideProvider(TypeOrmConfigService)
-    .useValue({
-      createTypeOrmOptions: () => ({
-        type: 'postgres',
-        host: postgresContainer.getHost(),
-        port: postgresContainer.getPort(),
-        username: postgresContainer.getUsername(),
-        password: postgresContainer.getPassword(),
-        database: postgresContainer.getDatabase(),
-        autoLoadEntities: true,
-        synchronize: true,
-      }),
-    })
-    .compile();
-
-  app = moduleFixture.createNestApplication();
-  await app.init();
-  await app.listen(0);
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  const port = app.getHttpServer().address().port;
-  const axiosConfig = {
-    baseURL: `http://127.0.0.1:${port}`,
-    validateStatus: () => true,
-  };
-  api = axios.create(axiosConfig);
+  app = await testingAppSetup();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const port = app.getHttpServer().address().port as number;
+  api = axiosInstanceSetup(port);
 });
 
 afterAll(async () => {
   await app.close();
-  await postgresContainer.stop();
 });
 
 describe('AUTH', () => {
