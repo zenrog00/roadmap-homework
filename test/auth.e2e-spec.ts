@@ -3,12 +3,10 @@ import { AxiosInstance, AxiosResponse } from 'axios';
 import { GetUsersResponseDto, UserDto } from 'src/users/dtos';
 import * as cookie from 'cookie';
 import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
+import { jwtRegex, uuidRegex } from './utils/regex';
 
 let app: INestApplication;
 let api: AxiosInstance;
-
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 beforeAll(async () => {
   app = await testingAppSetup();
@@ -50,8 +48,6 @@ describe('AUTH', () => {
         expect(response.data).toHaveProperty('accessToken');
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(typeof response.data.accessToken).toBe('string');
-
-        const jwtRegex = /^[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.[a-zA-Z0-9-_]+$/;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(response.data.accessToken).toMatch(jwtRegex);
       });
