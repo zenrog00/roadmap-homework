@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
-import { GetUsersQueryDto, UserDto } from './dtos';
+import { GetUsersQueryDto, GetUsersResponseDto, UserDto } from './dtos';
 
 @Controller('users')
 export class UsersController {
@@ -32,7 +32,7 @@ export class UsersController {
   @Get()
   async getUsers(
     @Query(new ValidationPipe({ transform: true })) query: GetUsersQueryDto,
-  ) {
+  ): Promise<GetUsersResponseDto> {
     const { data, ...cursors } = await this.usersService.findAll(query);
     return {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
