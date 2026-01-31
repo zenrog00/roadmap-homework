@@ -190,4 +190,35 @@ describe('AUTH', () => {
       });
     });
   });
+
+  describe('POST /auth/login', () => {
+    beforeEach(async () => {
+      await api.post('/auth/register', userDto);
+    });
+
+    it('should return 201 with valid username and password', async () => {
+      const response = await api.post('auth/login', {
+        username: userDto.username,
+        password: userDto.password,
+      });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('should return 401 with invalid username', async () => {
+      const response = await api.post('auth/login', {
+        username: 'wrong_user',
+        password: userDto.password,
+      });
+      expect(response.status).toBe(401);
+    });
+
+    it('should return 401 with invalid password', async () => {
+      const response = await api.post('auth/login', {
+        username: userDto.password,
+        password: userDto.username,
+      });
+      expect(response.status).toBe(401);
+    });
+  });
 });
