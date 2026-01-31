@@ -77,13 +77,13 @@ describe('AUTH', () => {
   });
 
   describe('POST /auth/register', () => {
-    let response: AxiosResponse;
-
-    beforeEach(async () => {
-      response = await api.post('/auth/register', userDto);
-    });
-
     describe('valid user data', () => {
+      let response: AxiosResponse;
+
+      beforeEach(async () => {
+        response = await api.post('/auth/register', userDto);
+      });
+
       it('should return 201 response code', () => {
         expect(response.status).toBe(201);
       });
@@ -156,6 +156,37 @@ describe('AUTH', () => {
           statusCode: 400,
           message: `Username or email already exists!`,
         });
+      });
+    });
+
+    describe('invalid user data', () => {
+      test.each([
+        { field: 'username', value: 0, when: 'is not a string' },
+        { field: 'username', value: '', when: 'is empty string' },
+        { field: 'email', value: 'not-email', when: 'is not valid' },
+        { field: 'password', value: 0, when: 'is not a string' },
+        { field: 'password', value: '', when: 'is empty string' },
+        {
+          field: 'birthdate',
+          value: 'not-date',
+          when: 'is not ISO8601',
+        },
+        {
+          field: 'description',
+          value: 0,
+          when: 'is not a string',
+        },
+        {
+          field: 'description',
+          value: 'a'.repeat(1001),
+          when: 'is more than 1000 symbols',
+        },
+      ])('should return 400 when $field $when', async ({ field, value }) => {
+        const response = await api.post('/auth/register', {
+          ...userDto,
+          [field]: value,
+        });
+        expect(response.status).toBe(400);
       });
     });
   });
