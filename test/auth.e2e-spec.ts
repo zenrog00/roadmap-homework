@@ -1,12 +1,15 @@
 import { INestApplication } from '@nestjs/common';
 import { AxiosInstance, AxiosResponse } from 'axios';
-import { GetUsersResponseDto, UserDto } from 'src/users/dtos';
+import { GetUsersResponseDto, UserDto, UserResponseDto } from 'src/users/dtos';
 import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
 import { uuidRegex } from './utils/regex';
 import {
   expectValidAccessTokenResponse,
   expectValidRefreshTokenCookie,
 } from './utils/assertions/auth.assertions';
+import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
+import { ConfigService } from '@nestjs/config';
+import { EnvironmentVariables } from 'src/env';
 
 let app: INestApplication;
 let api: AxiosInstance;
@@ -156,6 +159,36 @@ describe('AUTH', () => {
 
       it('should return HttpOnly refreshToken cookie with path /auth', () => {
         expectValidRefreshTokenCookie(response);
+      });
+
+      it('multiple logins should create not more than MAX_USER_SESSIONS env variable', async () => {
+        const requestBody = {
+          username: userDto.username,
+          password: userDto.password,
+        };
+        await Promise.all(
+          new Array(6).map(() => api.post('/auth/login', requestBody)),
+        );
+
+        const {
+          data: { id: userId },
+        } = await api.get<UserResponseDto>('users/my', {
+          headers: {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            Authorization: `Bearer ${response.data.accessToken}`,
+          },
+        });
+
+        const configService =
+          app.get<ConfigService<EnvironmentVariables, true>>(ConfigService);
+        const maxSessionsCount = configService.get('MAX_USER_SESSIONS', {
+          infer: true,
+        });
+
+        const refreshSessionService = app.get(RefreshSessionsService);
+        const userSessionsCount =
+          await refreshSessionService.countActiveSessions(userId);
+        expect(userSessionsCount).toBeLessThanOrEqual(maxSessionsCount);
       });
     });
 

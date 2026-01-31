@@ -105,7 +105,7 @@ export class RefreshSessionsService {
     });
   }
 
-  private async countActiveSessions(userId: string) {
+  async countActiveSessions(userId: string) {
     return await this.refreshSessionRepository
       .createQueryBuilder('session')
       .innerJoin('session.user', 'user')
