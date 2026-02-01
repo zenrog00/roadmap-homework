@@ -140,7 +140,7 @@ describe('AUTH', () => {
       await api.post('/auth/register', userDto);
     });
 
-    describe('valid data', () => {
+    describe('valid username and password', () => {
       let response: AxiosResponse;
 
       beforeEach(async () => {
@@ -193,7 +193,7 @@ describe('AUTH', () => {
       });
     });
 
-    describe('invalid data', () => {
+    describe('invalid username or password', () => {
       it('should return 401 with invalid username', async () => {
         const response = await api.post('auth/login', {
           username: 'wrong_user',
@@ -215,9 +215,6 @@ describe('AUTH', () => {
   describe('POST /auth/refresh-tokens', () => {
     let oldAccessToken: string;
     let oldRefreshToken: string | undefined;
-    let refreshStatus: number;
-    let newAccessToken: string;
-    let newRefreshToken: string | undefined;
 
     beforeEach(async () => {
       const registerResponse = await api.post('auth/register', userDto);
@@ -225,25 +222,60 @@ describe('AUTH', () => {
       oldAccessToken = registerResponse.data.accessToken;
       ({ refreshToken: oldRefreshToken } =
         extractRefreshToken(registerResponse));
-
-      const refreshResponse = await api.post(
-        'auth/refresh-tokens',
-        {},
-        {
-          headers: {
-            Cookie: `refreshToken=${oldRefreshToken}`,
-          },
-        },
-      );
-      refreshStatus = refreshResponse.status;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      newAccessToken = refreshResponse.data.accessToken;
-      ({ refreshToken: newRefreshToken } =
-        extractRefreshToken(refreshResponse));
     });
 
-    it('should return 201 response status', () => {
-      expect(refreshStatus).toBe(201);
+    describe('valid refreshToken', () => {
+      let refreshResponse: AxiosResponse;
+
+      beforeEach(async () => {
+        refreshResponse = await api.post(
+          'auth/refresh-tokens',
+          {},
+          {
+            headers: {
+              Cookie: `refreshToken=${oldRefreshToken}`,
+            },
+          },
+        );
+      });
+
+      it('should return 201 response status', () => {
+        expect(refreshResponse.status).toBe(201);
+      });
+
+      it('should return JWT accessToken', () => {
+        expectValidAccessTokenResponse(refreshResponse);
+      });
+
+      it('should return HttpOnly refreshToken cookie with path /auth', () => {
+        expectValidRefreshTokenCookie(refreshResponse);
+      });
+
+      it('should return different tokens', () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(oldAccessToken).not.toBe(refreshResponse.data.accessToken);
+        const { refreshToken: newRefreshToken } =
+          extractRefreshToken(refreshResponse);
+        expect(oldRefreshToken).not.toBe(newRefreshToken);
+      });
+
+      it('should remove old refreshToken from database', async () => {
+        const refreshSessionsService = app.get(RefreshSessionsService);
+        const foundSession = await refreshSessionsService.findOneBy({
+          id: oldRefreshToken,
+        });
+        expect(foundSession).toBeNull();
+      });
+
+      it('should save new refreshToken to database', async () => {
+        const { refreshToken: newRefreshToken } =
+          extractRefreshToken(refreshResponse);
+        const refreshSessionsService = app.get(RefreshSessionsService);
+        const foundSession = await refreshSessionsService.findOneBy({
+          id: newRefreshToken,
+        });
+        expect(foundSession).not.toBeNull();
+      });
     });
   });
 });

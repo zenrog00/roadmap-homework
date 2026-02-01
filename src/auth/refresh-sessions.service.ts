@@ -93,7 +93,7 @@ export class RefreshSessionsService {
     });
   }
 
-  private async findOneBy(opts: FindOptionsWhere<RefreshSession>) {
+  async findOneBy(opts: FindOptionsWhere<RefreshSession>) {
     return await this.refreshSessionRepository.findOne({
       where: {
         ...opts,
