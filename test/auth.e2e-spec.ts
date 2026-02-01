@@ -404,4 +404,82 @@ describe('AUTH', () => {
       });
     });
   });
+
+  describe('POST /auth/logout/all', () => {
+    let accessToken: string;
+    let refreshToken: string | undefined;
+    let userId: string;
+
+    beforeEach(async () => {
+      const registerResponse = await api.post('auth/register', userDto);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      accessToken = registerResponse.data.accessToken;
+      refreshToken = extractRefreshToken(registerResponse).refreshToken;
+      ({
+        data: { id: userId },
+      } = await api.get('users/my', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }));
+    });
+
+    describe('valid tokens', () => {
+      let logoutAllResponse: AxiosResponse;
+
+      beforeEach(async () => {
+        logoutAllResponse = await api.post(
+          'auth/logout/all',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+      });
+
+      it('should return 201 response status', () => {
+        expect(logoutAllResponse.status).toBe(201);
+      });
+
+      it('should remove all user refreshTokens from database', async () => {
+        const refreshSessionsService = app.get(RefreshSessionsService);
+        const sessionsCount =
+          await refreshSessionsService.countActiveSessions(userId);
+        expect(sessionsCount).toBe(0);
+      });
+
+      it('should return 401 on attempts to refresh with same refreshToken', async () => {
+        const refreshResponse = await api.post(
+          'auth/refresh-tokens',
+          {},
+          {
+            headers: {
+              Cookie: `refreshToken=${refreshToken}`,
+            },
+          },
+        );
+        expect(refreshResponse.data).toMatchObject({
+          statusCode: 401,
+          message: 'Invalid or expired refresh token!',
+        });
+      });
+    });
+
+    describe('invalid tokens', () => {
+      it('should return 401 with invalid accessToken', async () => {
+        const logoutAllResponse = await api.post(
+          'auth/logout/all',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}_wrong`,
+            },
+          },
+        );
+        expect(logoutAllResponse.status).toBe(401);
+      });
+    });
+  });
 });
