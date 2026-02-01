@@ -44,14 +44,11 @@ export class AuthService {
     };
   }
 
-  @Transactional()
   async refreshTokens(ip: string, userAgent: string, refreshToken: string) {
-    // there are two possibilities:
-    // 1. session not expired and has same fingerpint, so it's valid
-    // 2. session expired or has different fingerpint (it was probably stolen), so it's not valid
-    // in both cases session should be deleted and replaced
-    const refreshSession =
-      await this.refreshSessionsService.findAndDeleteSession(refreshToken);
+    const refreshSession = await this.refreshSessionsService.findOneBy({
+      id: refreshToken,
+    });
+
     const validatedRefreshSession =
       await this.refreshSessionsService.validateSession(
         refreshSession,
@@ -59,6 +56,14 @@ export class AuthService {
         userAgent,
       );
     if (!validatedRefreshSession) {
+      if (refreshSession) {
+        // if session wasn't validated than it's either expired
+        // or fingerprint doesn't match and it was probably stolen
+        // in both cases we need to delete it
+        await this.refreshSessionsService.deleteSession({
+          id: refreshSession.id,
+        });
+      }
       throw new UnauthorizedException('Invalid or expired refresh token!');
     }
 
@@ -68,8 +73,8 @@ export class AuthService {
 
     return {
       accessToken: this.generateAccessToken(userId, username),
-      refreshToken: await this.refreshSessionsService.createSession(
-        userId,
+      refreshToken: await this.refreshSessionsService.replaceSession(
+        validatedRefreshSession,
         ip,
         userAgent,
       ),

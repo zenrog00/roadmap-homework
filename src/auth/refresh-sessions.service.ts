@@ -43,16 +43,14 @@ export class RefreshSessionsService {
   }
 
   @Transactional()
-  async findAndDeleteSession(id: string) {
-    const session = await this.findOneBy({ id });
-    // findOne uses leftJoin when querying relations
-    // so we need to check session.user also
-    // to know that user wasn't soft deleted
-    if (session && session.user) {
-      await this.refreshSessionRepository.delete(session.id);
-      return session;
-    }
-    return null;
+  async replaceSession(
+    { id: idForDelete, userId }: RefreshSession,
+    ip: string,
+    userAgent: string,
+  ) {
+    await this.deleteSession({ id: idForDelete });
+    const id = await this.createSession(userId, ip, userAgent);
+    return id;
   }
 
   async deleteSession(opts: FindOptionsWhere<RefreshSession>) {
