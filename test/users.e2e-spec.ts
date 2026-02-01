@@ -268,5 +268,47 @@ describe('USERS', () => {
         expect(loginResponse.status).toBe(401);
       });
     });
+
+    describe('invalid user data', () => {
+      it('should return 401 for invalid accessToken', async () => {
+        const updateUserResponse = await api.get<UserResponseDto>('users/my', {
+          headers: { Authorization: `Bearer ${accessToken}_wrong` },
+        });
+        expect(updateUserResponse.status).toBe(401);
+      });
+
+      test.each([
+        { field: 'username', value: 0, when: 'is not a string' },
+        { field: 'username', value: '', when: 'is empty string' },
+        { field: 'email', value: 'not-email', when: 'is not valid' },
+        { field: 'password', value: 0, when: 'is not a string' },
+        { field: 'password', value: '', when: 'is empty string' },
+        {
+          field: 'birthdate',
+          value: 'not-date',
+          when: 'is not ISO8601',
+        },
+        {
+          field: 'description',
+          value: 0,
+          when: 'is not a string',
+        },
+        {
+          field: 'description',
+          value: 'a'.repeat(1001),
+          when: 'is more than 1000 symbols',
+        },
+      ])('should return 400 when $field $when', async ({ field, value }) => {
+        const response = await api.put(
+          'users/my',
+          {
+            ...userDto,
+            [field]: value,
+          },
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        expect(response.status).toBe(400);
+      });
+    });
   });
 });
