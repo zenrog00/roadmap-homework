@@ -1,9 +1,12 @@
+import { randomUUID } from 'node:crypto';
 import { UserDto } from 'src/users/dtos';
 
 export function generateUserDto(): UserDto {
+  const randomId = randomUUID();
+
   return {
-    username: `user_${Date.now()}`,
-    email: `${Date.now()}@yahoo.com`,
+    username: `user_${randomId}}`,
+    email: `${randomId}}@yahoo.com`,
     password: 'test_pass',
     birthdate: new Date(),
     description: '',
