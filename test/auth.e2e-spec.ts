@@ -277,5 +277,55 @@ describe('AUTH', () => {
         expect(foundSession).not.toBeNull();
       });
     });
+
+    describe('invalid refreshToken', () => {
+      it('should return 401 response status', async () => {
+        const refreshResponse = await api.post(
+          'auth/refresh-tokens',
+          {},
+          {
+            headers: {
+              Cookie: `refreshToken=${oldRefreshToken}_wrong`,
+            },
+          },
+        );
+        expect(refreshResponse.data).toMatchObject({
+          statusCode: 401,
+          message: 'Invalid or expired refresh token!',
+        });
+      });
+    });
+
+    describe('valid refreshToken and diffent fingerprint', () => {
+      let refreshResponse: AxiosResponse;
+
+      beforeEach(async () => {
+        refreshResponse = await api.post(
+          'auth/refresh-tokens',
+          {},
+          {
+            headers: {
+              Cookie: `refreshToken=${oldRefreshToken}`,
+              'User-Agent': 'Test UA',
+            },
+          },
+        );
+      });
+
+      it('should return 401 response status', () => {
+        expect(refreshResponse.data).toMatchObject({
+          statusCode: 401,
+          message: 'Invalid or expired refresh token!',
+        });
+      });
+
+      it('should remove old refreshToken from database', async () => {
+        const refreshSessionsService = app.get(RefreshSessionsService);
+        const foundSession = await refreshSessionsService.findOneBy({
+          id: oldRefreshToken,
+        });
+        expect(foundSession).toBeNull();
+      });
+    });
   });
 });
