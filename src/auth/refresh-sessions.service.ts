@@ -90,7 +90,7 @@ export class RefreshSessionsService {
   }
 
   async findOneBy(opts: FindOptionsWhere<RefreshSession>) {
-    return await this.refreshSessionRepository.findOne({
+    const session = await this.refreshSessionRepository.findOne({
       where: {
         ...opts,
         user: {
@@ -99,6 +99,12 @@ export class RefreshSessionsService {
       },
       relations: { user: true },
     });
+    // findOne uses leftJoin for relations and
+    // returns session even if user is soft deleted
+    if (session === null || session.user === null) {
+      return null;
+    }
+    return session;
   }
 
   async countActiveSessions(userId: string) {
