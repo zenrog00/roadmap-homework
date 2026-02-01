@@ -12,6 +12,7 @@ import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
 import { extractRefreshToken } from './utils/auth';
+import { generateUserDto } from './utils/users';
 
 let app: INestApplication;
 let api: AxiosInstance;
@@ -31,13 +32,7 @@ describe('AUTH', () => {
   let userDto: UserDto;
 
   beforeEach(() => {
-    userDto = {
-      username: `user_${Date.now()}`,
-      email: `${Date.now()}@yahoo.com`,
-      password: 'test_pass',
-      birthdate: new Date(),
-      description: '',
-    };
+    userDto = generateUserDto();
   });
 
   describe('POST /auth/register', () => {
