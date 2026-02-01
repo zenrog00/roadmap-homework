@@ -39,6 +39,9 @@ export class UsersController {
     @Query(new ValidationPipe({ transform: true })) query: GetUsersQueryDto,
   ): Promise<GetUsersResponseDto> {
     const { data, ...cursors } = await this.usersService.findAll(query);
+    if (query.username && data.length === 0) {
+      throw new NotFoundException("User's data not found!");
+    }
     return {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       data: data.map(({ password, ...userData }) => userData),
