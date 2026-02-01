@@ -5,7 +5,7 @@ import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
 import { GetUsersResponseDto, UserDto, UserResponseDto } from 'src/users/dtos';
 import { generateUserDto } from './utils/users';
 import { uuidRegex } from './utils/regex';
-import { expectValidAccessTokenResponse } from './utils/assertions/auth.assertions';
+import { extractRefreshToken } from './utils/auth';
 
 let app: INestApplication;
 let api: AxiosInstance;
@@ -24,20 +24,14 @@ afterAll(async () => {
 describe('USERS', () => {
   let userDto: UserDto;
   let accessToken: string;
-  let userId: string;
+  let refreshToken: string | undefined;
 
   beforeEach(async () => {
     userDto = generateUserDto();
     const registerResponse = await api.post('auth/register', userDto);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     accessToken = registerResponse.data.accessToken;
-    ({
-      data: { id: userId },
-    } = await api.get('users/my', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }));
+    refreshToken = extractRefreshToken(registerResponse).refreshToken;
   });
 
   describe('GET /users/my', () => {
@@ -208,6 +202,18 @@ describe('USERS', () => {
   });
 
   describe('PUT /users/my', () => {
+    let userId: string;
+
+    beforeEach(async () => {
+      ({
+        data: { id: userId },
+      } = await api.get('users/my', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }));
+    });
+
     describe('valid user data', () => {
       it('should update current users data in database', async () => {
         const newUserDto: UserDto = {
@@ -308,6 +314,69 @@ describe('USERS', () => {
           { headers: { Authorization: `Bearer ${accessToken}` } },
         );
         expect(response.status).toBe(400);
+      });
+    });
+  });
+
+  describe('DELETE /users/my', () => {
+    describe('success responses', () => {
+      let deleteResponse: AxiosResponse;
+
+      beforeEach(async () => {
+        deleteResponse = await api.delete('users/my', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      });
+
+      it('should return 200 response status', () => {
+        expect(deleteResponse.status).toBe(200);
+      });
+
+      it(`should return 404 on user's data requests`, async () => {
+        const authHeader = { Authorization: `Bearer ${accessToken}` };
+        const [myUserResponse, userByUsernameResponse] = await Promise.all([
+          api.get('users/my', {
+            headers: authHeader,
+          }),
+          api.get('users', {
+            params: {
+              username: userDto.username,
+            },
+            headers: authHeader,
+          }),
+        ]);
+        expect(myUserResponse.status).toBe(404);
+        expect(userByUsernameResponse.status).toBe(404);
+      });
+
+      it('should not be able to login', async () => {
+        const loginResponse = await api.post('auth/login', {
+          username: userDto.username,
+          password: userDto.password,
+        });
+        expect(loginResponse.status).toBe(401);
+      });
+
+      it('should not be able to refresh tokens', async () => {
+        const refreshResponse = await api.post(
+          'auth/refresh-tokens',
+          {},
+          {
+            headers: {
+              Cookie: `refreshToken=${refreshToken}`,
+            },
+          },
+        );
+        expect(refreshResponse.status).toBe(401);
+      });
+    });
+
+    describe('error responses', () => {
+      it('should return 401 for invalid accessToken', async () => {
+        const deleteUserResponse = await api.delete('users/my', {
+          headers: { Authorization: `Bearer ${accessToken}_wrong` },
+        });
+        expect(deleteUserResponse.status).toBe(401);
       });
     });
   });
