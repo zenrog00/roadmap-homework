@@ -5,6 +5,7 @@ import { UsersService } from 'src/users/users.service';
 import { Transactional } from 'typeorm-transactional';
 import { RefreshSessionsService } from './refresh-sessions.service';
 import { compareWithHash } from 'src/common/utils/hash';
+import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class AuthService {
@@ -94,7 +95,7 @@ export class AuthService {
   }
 
   private generateAccessToken(userId: string, username: string) {
-    const payload = { sub: userId, username };
+    const payload = { sub: userId, username, jti: randomUUID() };
     return this.jwtService.sign(payload);
   }
 }
