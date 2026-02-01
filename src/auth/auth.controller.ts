@@ -8,6 +8,8 @@ import {
   Ip,
   Headers,
   UseGuards,
+  ParseUUIDPipe,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
@@ -69,7 +71,14 @@ export class AuthController {
     @Ip() ip: string,
     @Headers('user-agent') userAgent: string,
     @Res({ passthrough: true }) response: Response,
-    @Cookie('refreshToken') refreshToken?: string,
+    @Cookie(
+      'refreshToken',
+      new ParseUUIDPipe({
+        exceptionFactory: () =>
+          new UnauthorizedException('Invalid or expired refresh token!'),
+      }),
+    )
+    refreshToken: string,
   ) {
     const tokens = await this.authService.refreshTokens(
       ip,
@@ -81,7 +90,16 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logoutUserSession(@Cookie('refreshToken') refreshToken?: string) {
+  async logoutUserSession(
+    @Cookie(
+      'refreshToken',
+      new ParseUUIDPipe({
+        exceptionFactory: () =>
+          new UnauthorizedException('Invalid or expired refresh token!'),
+      }),
+    )
+    refreshToken: string,
+  ) {
     await this.authService.logoutUserSession(refreshToken);
   }
 
