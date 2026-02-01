@@ -17,7 +17,6 @@ const typeOrmOptions: TypeOrmModuleOptions = {
   password: process.env.POSTGRES_PASSWORD,
   database: process.env.POSTGRES_DATABASE,
   autoLoadEntities: true,
-  synchronize: true,
 };
 
 export async function testingAppSetup() {
