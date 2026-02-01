@@ -10,6 +10,7 @@ import {
 import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
+import { extractRefreshToken } from './utils/auth';
 
 let app: INestApplication;
 let api: AxiosInstance;
@@ -46,7 +47,7 @@ describe('AUTH', () => {
         response = await api.post('/auth/register', userDto);
       });
 
-      it('should return 201 response code', () => {
+      it('should return 201 response status', () => {
         expect(response.status).toBe(201);
       });
 
@@ -149,7 +150,7 @@ describe('AUTH', () => {
         });
       });
 
-      it('should return 201 with valid username and password', () => {
+      it('should return 201', () => {
         expect(response.status).toBe(201);
       });
 
@@ -208,6 +209,41 @@ describe('AUTH', () => {
         });
         expect(response.status).toBe(401);
       });
+    });
+  });
+
+  describe('POST /auth/refresh-tokens', () => {
+    let oldAccessToken: string;
+    let oldRefreshToken: string | undefined;
+    let refreshStatus: number;
+    let newAccessToken: string;
+    let newRefreshToken: string | undefined;
+
+    beforeEach(async () => {
+      const registerResponse = await api.post('auth/register', userDto);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      oldAccessToken = registerResponse.data.accessToken;
+      ({ refreshToken: oldRefreshToken } =
+        extractRefreshToken(registerResponse));
+
+      const refreshResponse = await api.post(
+        'auth/refresh-tokens',
+        {},
+        {
+          headers: {
+            Cookie: `refreshToken=${oldRefreshToken}`,
+          },
+        },
+      );
+      refreshStatus = refreshResponse.status;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      newAccessToken = refreshResponse.data.accessToken;
+      ({ refreshToken: newRefreshToken } =
+        extractRefreshToken(refreshResponse));
+    });
+
+    it('should return 201 response status', () => {
+      expect(refreshStatus).toBe(201);
     });
   });
 });

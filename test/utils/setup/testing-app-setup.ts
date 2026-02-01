@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import cookieParser from 'cookie-parser';
 import { AppModule } from 'src/app.module';
 import { TypeOrmConfigService } from 'src/database/typeorm-config-service';
 import {
@@ -32,6 +33,7 @@ export async function testingAppSetup() {
     .compile();
 
   const app = moduleFixture.createNestApplication();
+  app.use(cookieParser());
   await app.init();
   await app.listen(0);
 
