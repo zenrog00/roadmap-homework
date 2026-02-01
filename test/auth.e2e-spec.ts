@@ -164,7 +164,7 @@ describe('AUTH', () => {
           password: userDto.password,
         };
         await Promise.all(
-          new Array(6).map(() => api.post('/auth/login', requestBody)),
+          Array.from({ length: 6 }, () => api.post('/auth/login', requestBody)),
         );
 
         const {
