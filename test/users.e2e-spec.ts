@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { INestApplication } from '@nestjs/common';
-import { AxiosInstance } from 'axios';
+import { AxiosInstance, AxiosResponse } from 'axios';
 import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
 import { GetUsersResponseDto, UserDto, UserResponseDto } from 'src/users/dtos';
 import { generateUserDto } from './utils/users';
 import { uuidRegex } from './utils/regex';
+import { expectValidAccessTokenResponse } from './utils/assertions/auth.assertions';
 
 let app: INestApplication;
 let api: AxiosInstance;
@@ -23,12 +24,20 @@ afterAll(async () => {
 describe('USERS', () => {
   let userDto: UserDto;
   let accessToken: string;
+  let userId: string;
 
   beforeEach(async () => {
     userDto = generateUserDto();
     const registerResponse = await api.post('auth/register', userDto);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     accessToken = registerResponse.data.accessToken;
+    ({
+      data: { id: userId },
+    } = await api.get('users/my', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }));
   });
 
   describe('GET /users/my', () => {
@@ -194,6 +203,69 @@ describe('USERS', () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         expect(usersResponse.status).toBe(404);
+      });
+    });
+  });
+
+  describe('PUT /users/my', () => {
+    describe('valid user data', () => {
+      it('should update current users data in database', async () => {
+        const newUserDto: UserDto = {
+          ...userDto,
+          username: 'user_new',
+          email: 'new_email@yahoo.com',
+        };
+        const userUpdateResponse = await api.put('users/my', newUserDto, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        expect(userUpdateResponse.status).toBe(200);
+
+        const { data: userData } = await api.get<UserResponseDto>('users/my', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        expect(userData).toEqual({
+          id: userId,
+          username: newUserDto.username,
+          email: newUserDto.email,
+          birthdate: userDto.birthdate.toISOString().split('T')[0],
+          description: userDto.description,
+        });
+      });
+
+      it('should be able to login with new password', async () => {
+        const newPassword = 'new_password';
+        await api.put(
+          'users/my',
+          { ...userDto, password: newPassword },
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+
+        const loginResponse = await api.post('auth/login', {
+          username: userDto.username,
+          password: newPassword,
+        });
+        expect(loginResponse.status).toBe(201);
+      });
+
+      it('should not be able to login with old password', async () => {
+        const newPassword = 'new_password';
+        await api.put(
+          'users/my',
+          { ...userDto, password: newPassword },
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
+
+        const loginResponse = await api.post('auth/login', {
+          username: userDto.username,
+          password: userDto.password,
+        });
+        expect(loginResponse.status).toBe(401);
       });
     });
   });
