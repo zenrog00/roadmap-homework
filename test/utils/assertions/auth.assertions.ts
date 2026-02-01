@@ -1,6 +1,8 @@
 import { AxiosResponse } from 'axios';
 import { jwtRegex, uuidRegex } from '../regex';
 import * as cookie from 'cookie';
+import { INestApplication } from '@nestjs/common';
+import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
 
 export const expectValidAccessTokenResponse = (response: AxiosResponse) => {
   expect(response.data).toHaveProperty('accessToken');
@@ -23,4 +25,15 @@ export const expectValidRefreshTokenCookie = (response: AxiosResponse) => {
   expect(new Date(parsedCookie.Expires!).getTime()).toBeGreaterThan(Date.now());
 
   expect(parsedCookie.refreshToken).toMatch(uuidRegex);
+};
+
+export const expectRefreshTokenRemoved = async (
+  app: INestApplication,
+  refreshToken?: string,
+) => {
+  const refreshSessionsService = app.get(RefreshSessionsService);
+  const foundSession = await refreshSessionsService.findOneBy({
+    id: refreshToken,
+  });
+  expect(foundSession).toBeNull();
 };

@@ -4,6 +4,7 @@ import { GetUsersResponseDto, UserDto, UserResponseDto } from 'src/users/dtos';
 import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
 import { uuidRegex } from './utils/regex';
 import {
+  expectRefreshTokenRemoved,
   expectValidAccessTokenResponse,
   expectValidRefreshTokenCookie,
 } from './utils/assertions/auth.assertions';
@@ -150,7 +151,7 @@ describe('AUTH', () => {
         });
       });
 
-      it('should return 201', () => {
+      it('should return 201 response status', () => {
         expect(response.status).toBe(201);
       });
 
@@ -260,11 +261,7 @@ describe('AUTH', () => {
       });
 
       it('should remove old refreshToken from database', async () => {
-        const refreshSessionsService = app.get(RefreshSessionsService);
-        const foundSession = await refreshSessionsService.findOneBy({
-          id: oldRefreshToken,
-        });
-        expect(foundSession).toBeNull();
+        await expectRefreshTokenRemoved(app, oldRefreshToken);
       });
 
       it('should save new refreshToken to database', async () => {
@@ -320,11 +317,90 @@ describe('AUTH', () => {
       });
 
       it('should remove old refreshToken from database', async () => {
-        const refreshSessionsService = app.get(RefreshSessionsService);
-        const foundSession = await refreshSessionsService.findOneBy({
-          id: oldRefreshToken,
+        await expectRefreshTokenRemoved(app, oldRefreshToken);
+      });
+    });
+  });
+
+  describe('POST /auth/logout', () => {
+    let accessToken: string;
+    let refreshToken: string | undefined;
+
+    beforeEach(async () => {
+      const registerResponse = await api.post('auth/register', userDto);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      accessToken = registerResponse.data.accessToken;
+      refreshToken = extractRefreshToken(registerResponse).refreshToken;
+    });
+
+    describe('valid tokens', () => {
+      let logoutResponse: AxiosResponse;
+
+      beforeEach(async () => {
+        logoutResponse = await api.post(
+          'auth/logout',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Cookie: `refreshToken=${refreshToken}`,
+            },
+          },
+        );
+      });
+
+      it('should return 201 response status', () => {
+        expect(logoutResponse.status).toBe(201);
+      });
+
+      it('should remove refreshToken from database', async () => {
+        await expectRefreshTokenRemoved(app, refreshToken);
+      });
+
+      it('should return 401 on attempts to refresh with same refreshToken', async () => {
+        const refreshResponse = await api.post(
+          'auth/refresh-tokens',
+          {},
+          {
+            headers: {
+              Cookie: `refreshToken=${refreshToken}`,
+            },
+          },
+        );
+        expect(refreshResponse.data).toMatchObject({
+          statusCode: 401,
+          message: 'Invalid or expired refresh token!',
         });
-        expect(foundSession).toBeNull();
+      });
+    });
+
+    describe('invalid tokens', () => {
+      it('should return 401 with invalid accessToken', async () => {
+        const logoutResponse = await api.post(
+          'auth/logout',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}_wrong`,
+              Cookie: `refreshToken=${refreshToken}`,
+            },
+          },
+        );
+        expect(logoutResponse.status).toBe(401);
+      });
+
+      it('should return 401 with invalid refreshToken', async () => {
+        const logoutResponse = await api.post(
+          'auth/logout',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              Cookie: `refreshToken=${refreshToken}_wrong`,
+            },
+          },
+        );
+        expect(logoutResponse.status).toBe(401);
       });
     });
   });
