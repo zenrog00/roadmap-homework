@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   UnauthorizedException,
+  HttpCode,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
@@ -18,7 +19,12 @@ import { LocalAuthGuard } from './guards';
 import { Cookie, Fingerprint, User } from 'src/common/decorators';
 import { ApiAuthResponse, Public } from './decorators';
 import { AuthResponseDto } from './dtos';
-import { ApiBasicAuth, ApiOperation, ApiSecurity } from '@nestjs/swagger';
+import {
+  ApiBasicAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiSecurity,
+} from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -95,6 +101,14 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Logout from current user session',
+  })
+  @ApiOkResponse({
+    description: 'Logout from provided refreshToken cookie session',
+  })
+  @ApiSecurity('RefreshSession')
   async logoutUserSession(
     @Cookie(
       'refreshToken',
