@@ -16,35 +16,28 @@ export class AuthService {
   ) {}
 
   @Transactional()
-  async registerUser(userDto: UserDto, ip: string, userAgent: string) {
+  async registerUser(userDto: UserDto, fingeprint: string) {
     const userId = await this.usersService.saveUser(userDto);
     return {
       accessToken: this.generateAccessToken(userId, userDto.username),
       refreshToken: await this.refreshSessionsService.createSession(
         userId,
-        ip,
-        userAgent,
+        fingeprint,
       ),
     };
   }
 
-  async loginUser(
-    userId: string,
-    username: string,
-    ip: string,
-    userAgent: string,
-  ) {
+  async loginUser(userId: string, username: string, fingeprint: string) {
     return {
       accessToken: this.generateAccessToken(userId, username),
       refreshToken: await this.refreshSessionsService.createSession(
         userId,
-        ip,
-        userAgent,
+        fingeprint,
       ),
     };
   }
 
-  async refreshTokens(ip: string, userAgent: string, refreshToken: string) {
+  async refreshTokens(refreshToken: string, fingeprint: string) {
     const refreshSession = await this.refreshSessionsService.findOneBy({
       id: refreshToken,
     });
@@ -52,8 +45,7 @@ export class AuthService {
     const validatedRefreshSession =
       await this.refreshSessionsService.validateSession(
         refreshSession,
-        ip,
-        userAgent,
+        fingeprint,
       );
     if (!validatedRefreshSession) {
       if (refreshSession) {
@@ -75,8 +67,7 @@ export class AuthService {
       accessToken: this.generateAccessToken(userId, username),
       refreshToken: await this.refreshSessionsService.replaceSession(
         validatedRefreshSession,
-        ip,
-        userAgent,
+        fingeprint,
       ),
     };
   }

@@ -5,8 +5,6 @@ import {
   ValidationPipe,
   Res,
   Inject,
-  Ip,
-  Headers,
   UseGuards,
   ParseUUIDPipe,
   UnauthorizedException,
@@ -17,7 +15,7 @@ import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
 import { UserDto } from 'src/users/dtos';
 import { LocalAuthGuard } from './guards';
-import { Cookie, User } from 'src/common/decorators';
+import { Cookie, Fingerprint, User } from 'src/common/decorators';
 import { Public } from './decorators';
 
 @Controller('auth')
@@ -31,15 +29,13 @@ export class AuthController {
   @Public()
   @Post('register')
   async registerUser(
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string,
+    @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,
     @Body(ValidationPipe) userDto: UserDto,
   ) {
     const { accessToken, refreshToken } = await this.authService.registerUser(
       userDto,
-      ip,
-      userAgent,
+      fingerprint,
     );
     this.createRefreshTokenCookie(response, refreshToken);
     return { accessToken };
@@ -49,8 +45,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async loginUser(
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string,
+    @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,
     @User('id') userId: string,
     @User('username') username: string,
@@ -58,8 +53,7 @@ export class AuthController {
     const { accessToken, refreshToken } = await this.authService.loginUser(
       userId,
       username,
-      ip,
-      userAgent,
+      fingerprint,
     );
     this.createRefreshTokenCookie(response, refreshToken);
     return { accessToken };
@@ -68,8 +62,7 @@ export class AuthController {
   @Public()
   @Post('refresh-tokens')
   async refreshTokens(
-    @Ip() ip: string,
-    @Headers('user-agent') userAgent: string,
+    @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,
     @Cookie(
       'refreshToken',
@@ -81,9 +74,8 @@ export class AuthController {
     refreshToken: string,
   ) {
     const tokens = await this.authService.refreshTokens(
-      ip,
-      userAgent,
       refreshToken,
+      fingerprint,
     );
     this.createRefreshTokenCookie(response, tokens.refreshToken);
     return { accessToken: tokens.accessToken };

@@ -20,7 +20,7 @@ export class RefreshSessionsService {
   ) {}
 
   @Transactional()
-  async createSession(userId: string, ip: string, userAgent: string) {
+  async createSession(userId: string, fingeprint: string) {
     // locking user with select for update
     // to prevent race conditions and creating
     // more than authModuleOptions.maxUserSessions for user
@@ -31,7 +31,6 @@ export class RefreshSessionsService {
       await this.deleteEarliestActiveSession(userId);
     }
 
-    const fingeprint = this.createFingerpint(ip, userAgent);
     const hashedFingerpint = await createHash(fingeprint);
     const refreshSession = this.refreshSessionRepository.create({
       userId,
@@ -45,11 +44,10 @@ export class RefreshSessionsService {
   @Transactional()
   async replaceSession(
     { id: idForDelete, userId }: RefreshSession,
-    ip: string,
-    userAgent: string,
+    fingerprint: string,
   ) {
     await this.deleteSession({ id: idForDelete });
-    const id = await this.createSession(userId, ip, userAgent);
+    const id = await this.createSession(userId, fingerprint);
     return id;
   }
 
@@ -57,16 +55,11 @@ export class RefreshSessionsService {
     await this.refreshSessionRepository.delete(opts);
   }
 
-  async validateSession(
-    session: RefreshSession | null,
-    ip: string,
-    userAgent: string,
-  ) {
+  async validateSession(session: RefreshSession | null, fingeprint: string) {
     if (session) {
-      const newFingerpint = this.createFingerpint(ip, userAgent);
       if (
         !this.isSessionExpired(session) &&
-        (await compareWithHash(newFingerpint, session.fingeprint))
+        (await compareWithHash(fingeprint, session.fingeprint))
       ) {
         return session;
       }
@@ -133,10 +126,5 @@ export class RefreshSessionsService {
       .orderBy('session.createdAt', 'ASC')
       .limit(1)
       .getOne();
-  }
-
-  private createFingerpint(ip: string, userAgent: string) {
-    const separator = '|';
-    return ip + separator + userAgent;
   }
 }
