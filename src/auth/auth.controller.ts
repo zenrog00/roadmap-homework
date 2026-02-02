@@ -21,6 +21,7 @@ import { ApiAuthResponse, Public } from './decorators';
 import { AuthResponseDto } from './dtos';
 import {
   ApiBasicAuth,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiSecurity,
@@ -105,10 +106,10 @@ export class AuthController {
   @ApiOperation({
     summary: 'Logout from current user session',
   })
-  @ApiOkResponse({
-    description: 'Logout from provided refreshToken cookie session',
-  })
   @ApiSecurity('RefreshSession')
+  @ApiOkResponse({
+    description: 'Removed provided refreshToken cookie session',
+  })
   async logoutUserSession(
     @Cookie(
       'refreshToken',
@@ -122,7 +123,15 @@ export class AuthController {
     await this.authService.logoutUserSession(refreshToken);
   }
 
+  @HttpCode(200)
   @Post('logout/all')
+  @ApiOperation({
+    summary: 'Logout from all current user sessions',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    description: 'Removed all current user sessions',
+  })
   async logoutAllUserSessions(@User('id') userId: string) {
     await this.authService.logoutAllUserSessions(userId);
   }

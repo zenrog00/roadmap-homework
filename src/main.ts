@@ -25,6 +25,7 @@ async function bootstrap() {
       },
       'RefreshSession',
     )
+    .addBearerAuth()
     .build();
   const documentFactory = () =>
     SwaggerModule.createDocument(app, swaggerConfig);
