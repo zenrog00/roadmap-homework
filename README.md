@@ -4,6 +4,7 @@
 Pet project with creating web app in NestJS.
 
 ### Stack
+* NodeJS
 * Typescript
 * NestJS
 * PostgreSQL
