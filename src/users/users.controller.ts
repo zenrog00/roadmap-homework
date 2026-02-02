@@ -66,7 +66,14 @@ export class UsersController {
     };
   }
 
+  @ApiOperation({
+    summary: 'Updates current user data',
+  })
+  @ApiBearerAuth()
   @Put('my')
+  @ApiOkResponse({
+    description: 'Current user data was updated',
+  })
   async updateMyUser(
     @User('id') userId: string,
     @Body(ValidationPipe) userDto: UserDto,
@@ -75,6 +82,14 @@ export class UsersController {
   }
 
   @Delete('my')
+  @ApiOperation({
+    summary: 'Soft deletes current user',
+  })
+  @ApiBearerAuth()
+  @Put('my')
+  @ApiOkResponse({
+    description: 'Current user was soft deleted',
+  })
   async deleteMyUser(@User('id') userId: string) {
     await this.usersService.deleteUser(userId);
   }
