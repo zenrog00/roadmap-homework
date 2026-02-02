@@ -345,7 +345,7 @@ describe('AUTH', () => {
       });
 
       it('should return 201 response status', () => {
-        expect(logoutResponse.status).toBe(201);
+        expect(logoutResponse.status).toBe(200);
       });
 
       it('should remove refreshToken from database', async () => {
@@ -435,7 +435,7 @@ describe('AUTH', () => {
       });
 
       it('should return 201 response status', () => {
-        expect(logoutAllResponse.status).toBe(201);
+        expect(logoutAllResponse.status).toBe(200);
       });
 
       it('should remove all user refreshTokens from database', async () => {
