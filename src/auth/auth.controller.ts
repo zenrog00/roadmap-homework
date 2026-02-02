@@ -37,6 +37,9 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @ApiOperation({
+    summary: 'Create and login new user',
+  })
   @ApiAuthResponse('User and user session were created successfully')
   async registerUser(
     @Fingerprint() fingerprint: string,
@@ -54,6 +57,9 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @ApiOperation({
+    summary: 'Login user',
+  })
   @ApiBasicAuth()
   @ApiAuthResponse('User session was created successfully')
   async loginUser(
@@ -74,8 +80,7 @@ export class AuthController {
   @Public()
   @Post('refresh-tokens')
   @ApiOperation({
-    summary:
-      'Get new access and refresh tokens. Needs to have refreshToken cookie set',
+    summary: 'Get new access and refresh tokens',
   })
   @ApiSecurity('RefreshSession')
   @ApiAuthResponse(
