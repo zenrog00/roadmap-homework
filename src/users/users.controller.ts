@@ -16,12 +16,21 @@ import {
   UserDto,
   UserResponseDto,
 } from './dtos';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('my')
+  @ApiOperation({
+    summary: 'Get current user data',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    type: UserResponseDto,
+    description: 'Current user data',
+  })
   async getMyUser(@User('id') userId: string): Promise<UserResponseDto> {
     const user = await this.usersService.findOneBy({
       id: userId,
