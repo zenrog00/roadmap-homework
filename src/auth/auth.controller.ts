@@ -18,7 +18,7 @@ import { LocalAuthGuard } from './guards';
 import { Cookie, Fingerprint, User } from 'src/common/decorators';
 import { ApiAuthResponse, Public } from './decorators';
 import { AuthResponseDto } from './dtos';
-import { ApiBasicAuth } from '@nestjs/swagger';
+import { ApiBasicAuth, ApiOperation, ApiSecurity } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -66,6 +66,14 @@ export class AuthController {
 
   @Public()
   @Post('refresh-tokens')
+  @ApiOperation({
+    summary:
+      'Get new access and refresh tokens. Needs to have refreshToken cookie set',
+  })
+  @ApiSecurity('RefreshSession')
+  @ApiAuthResponse(
+    'Created new access and refresh tokens. Old refresh token session was replaced',
+  )
   async refreshTokens(
     @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,

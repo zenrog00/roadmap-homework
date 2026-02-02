@@ -17,6 +17,14 @@ async function bootstrap() {
     .setDescription('Roadmap homework API description')
     .setVersion('0.0.1')
     .addBasicAuth()
+    .addCookieAuth(
+      'refreshToken',
+      {
+        type: 'apiKey',
+        in: 'cookie',
+      },
+      'RefreshSession',
+    )
     .build();
   const documentFactory = () =>
     SwaggerModule.createDocument(app, swaggerConfig);
