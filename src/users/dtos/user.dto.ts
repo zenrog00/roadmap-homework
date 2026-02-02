@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsDateString,
   IsEmail,
@@ -18,6 +19,10 @@ export class UserDto {
   @IsNotEmpty()
   password: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'date',
+  })
   @IsDateString()
   birthdate: Date;
 
