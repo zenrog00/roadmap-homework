@@ -16,9 +16,9 @@ import type { AuthModuleOptions } from './auth.module-options';
 import { UserDto } from 'src/users/dtos';
 import { LocalAuthGuard } from './guards';
 import { Cookie, Fingerprint, User } from 'src/common/decorators';
-import { Public } from './decorators';
+import { ApiAuthResponse, Public } from './decorators';
 import { AuthResponseDto } from './dtos';
-import { ApiCreatedResponse } from '@nestjs/swagger';
+import { ApiBasicAuth } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -30,21 +30,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @ApiCreatedResponse({
-    type: AuthResponseDto,
-    description: 'User was created successfully',
-    headers: {
-      'Set-Cookie': {
-        description:
-          'Contains refreshToken for storing user session and ability to refresh tokens',
-        schema: {
-          type: 'string',
-          example:
-            'refreshToken=tokenValue; HttpOnly; Path=/auth MaxAge=2592000',
-        },
-      },
-    },
-  })
+  @ApiAuthResponse('User and user session were created successfully')
   async registerUser(
     @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,
@@ -61,6 +47,8 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
+  @ApiBasicAuth()
+  @ApiAuthResponse('User session was created successfully')
   async loginUser(
     @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,

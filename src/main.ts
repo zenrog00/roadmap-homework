@@ -16,6 +16,7 @@ async function bootstrap() {
     .setTitle('Roadmap homework')
     .setDescription('Roadmap homework API description')
     .setVersion('0.0.1')
+    .addBasicAuth()
     .build();
   const documentFactory = () =>
     SwaggerModule.createDocument(app, swaggerConfig);
