@@ -44,6 +44,14 @@ export class UsersController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'Get cursor paginated users data with optional username filter',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    type: GetUsersResponseDto,
+    description: 'Cursor paginated users data',
+  })
   async getUsers(
     @Query(new ValidationPipe({ transform: true })) query: GetUsersQueryDto,
   ): Promise<GetUsersResponseDto> {
