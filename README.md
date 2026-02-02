@@ -25,3 +25,5 @@ To run PostgreSQL database use `docker compose up -d`.
 To run project use `npm run start:dev`.
 
 To run tests use `npm run test:e2e`.
+
+Api documentation is available at `/api` URL.
