@@ -6,8 +6,6 @@ import {
   Res,
   Inject,
   UseGuards,
-  ParseUUIDPipe,
-  UnauthorizedException,
   HttpCode,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -16,8 +14,8 @@ import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
 import { UserDto } from 'src/users/dtos';
 import { LocalAuthGuard } from './guards';
-import { Cookie, Fingerprint, User } from 'src/common/decorators';
-import { ApiAuthResponse, Public } from './decorators';
+import { Fingerprint, User } from 'src/common/decorators';
+import { ApiAuthResponse, Public, RefreshTokenCookie } from './decorators';
 import { AuthResponseDto } from './dtos';
 import {
   ApiBasicAuth,
@@ -89,13 +87,7 @@ export class AuthController {
   async refreshTokens(
     @Fingerprint() fingerprint: string,
     @Res({ passthrough: true }) response: Response,
-    @Cookie(
-      'refreshToken',
-      new ParseUUIDPipe({
-        exceptionFactory: () =>
-          new UnauthorizedException('Invalid or expired refresh token!'),
-      }),
-    )
+    @RefreshTokenCookie()
     refreshToken: string,
   ) {
     const tokens = await this.authService.refreshTokens(
@@ -116,13 +108,7 @@ export class AuthController {
     description: 'Removed provided refreshToken cookie session',
   })
   async logoutUserSession(
-    @Cookie(
-      'refreshToken',
-      new ParseUUIDPipe({
-        exceptionFactory: () =>
-          new UnauthorizedException('Invalid or expired refresh token!'),
-      }),
-    )
+    @RefreshTokenCookie()
     refreshToken: string,
   ) {
     await this.authService.logoutUserSession(refreshToken);
