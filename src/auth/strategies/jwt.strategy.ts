@@ -4,6 +4,11 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AUTH_MODULE_OPTIONS } from '../auth.module-definition';
 import type { AuthModuleOptions } from '../auth.module-options';
 
+interface JwtStrategyPayload {
+  sub: string;
+  username: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -16,8 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  validate(payload: JwtStrategyPayload) {
     return { id: payload.sub, username: payload.username };
   }
 }
