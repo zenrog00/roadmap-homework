@@ -6,6 +6,7 @@ import { PostgresErrorCode } from 'src/database/postgres-error-code';
 import { createHash } from 'src/common/utils/hash';
 import { Cron } from '@nestjs/schedule';
 import { UsersRepository } from './users.repository';
+import { isDatabaseError } from 'src/database/database-error';
 
 @Injectable()
 export class UsersService {
@@ -30,12 +31,14 @@ export class UsersService {
       const { id } = await this.usersRepository.save(user);
       return id;
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (err?.code === PostgresErrorCode.UniqueViolation) {
+      if (
+        isDatabaseError(err) &&
+        err.code === PostgresErrorCode.UniqueViolation
+      ) {
         throw new BadRequestException(`Username or email already exists!`);
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      throw new Error(`Unhandled error when saving user: ${err?.message}`, {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      throw new Error(`Unhandled error when saving user: ${message}`, {
         cause: err,
       });
     }
@@ -88,14 +91,16 @@ export class UsersService {
         password: hashedPassword,
       });
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (err?.code === PostgresErrorCode.UniqueViolation) {
+      if (
+        isDatabaseError(err) &&
+        err.code === PostgresErrorCode.UniqueViolation
+      ) {
         throw new BadRequestException(
           `Username ${userDto.username} already exists!`,
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      throw new Error(`Unhandled error when updating user: ${err?.message}`, {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      throw new Error(`Unhandled error when updating user: ${message}`, {
         cause: err,
       });
     }
