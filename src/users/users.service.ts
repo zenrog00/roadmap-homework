@@ -1,18 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { GetUsersQueryDto, UserDto } from './dtos';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { PostgresErrorCode } from 'src/database/postgres-error-code';
 import { createHash } from 'src/common/utils/hash';
 import { Cron } from '@nestjs/schedule';
+import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
+
+  // every day at midnight Moscow
+  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
+  private async deleteSoftDeletedUsers() {
+    const oneWeekAgo = "now() - interval '7 days'";
+    await this.usersRepository.deleteSoftDeletedUsers(oneWeekAgo);
+  }
 
   async saveUser(userDto: UserDto) {
     try {
@@ -41,20 +45,10 @@ export class UsersService {
     return await this.usersRepository.findOneBy(opts);
   }
 
-  async findAll({ username, cursor, limit, isPrevious }: GetUsersQueryDto) {
-    const queryBuilder = this.usersRepository.createQueryBuilder();
-    if (username) {
-      queryBuilder.where('username = :username', { username });
-    }
-    if (cursor) {
-      const operator = isPrevious ? '>' : '<';
-      queryBuilder.andWhere(`id ${operator} :cursor`, { cursor });
-    }
+  async findAll(getUsetsQueryDto: GetUsersQueryDto) {
+    const users = await this.usersRepository.findAll(getUsetsQueryDto);
 
-    const users = await queryBuilder
-      .orderBy('id', isPrevious ? 'ASC' : 'DESC')
-      .limit(limit + 1)
-      .getMany();
+    const { cursor, limit, isPrevious } = getUsetsQueryDto;
 
     const hasMore = users.length > limit;
     if (hasMore) {
@@ -81,11 +75,7 @@ export class UsersService {
   }
 
   async lockUserForUpdate(userId: string) {
-    await this.usersRepository
-      .createQueryBuilder()
-      .setLock('pessimistic_write')
-      .where('id = :userId', { userId })
-      .getOne();
+    await this.usersRepository.lockUserForUpdate(userId);
   }
 
   async updateUser(userId: string, userDto: UserDto) {
@@ -113,18 +103,5 @@ export class UsersService {
 
   async deleteUser(userId: string) {
     await this.usersRepository.softDelete(userId);
-  }
-
-  // every day at midnight Moscow
-  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
-  private async deleteSoftDeletedUsers() {
-    const oneWeekAgo = "now() - interval '7 days'";
-    await this.usersRepository
-      .createQueryBuilder()
-      .delete()
-      .from(User)
-      .where('"deletedAt" is not null')
-      .andWhere(`"deletedAt" <= ${oneWeekAgo}`)
-      .execute();
   }
 }

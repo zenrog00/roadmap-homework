@@ -60,8 +60,7 @@ export class UsersController {
       throw new NotFoundException("User's data not found!");
     }
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      data: data.map(({ password, ...userData }) => userData),
+      data,
       ...cursors,
     };
   }

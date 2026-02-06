@@ -263,7 +263,7 @@ describe('AUTH', () => {
         const { refreshToken: newRefreshToken } =
           extractRefreshToken(refreshResponse);
         const refreshSessionsService = app.get(RefreshSessionsService);
-        const foundSession = await refreshSessionsService.findOneBy({
+        const foundSession = await refreshSessionsService.findSession({
           id: newRefreshToken,
         });
         expect(foundSession).not.toBeNull();

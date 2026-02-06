@@ -32,7 +32,7 @@ export const expectRefreshTokenRemoved = async (
   refreshToken?: string,
 ) => {
   const refreshSessionsService = app.get(RefreshSessionsService);
-  const foundSession = await refreshSessionsService.findOneBy({
+  const foundSession = await refreshSessionsService.findSession({
     id: refreshToken,
   });
   expect(foundSession).toBeNull();

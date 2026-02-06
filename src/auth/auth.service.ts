@@ -38,7 +38,7 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string, fingeprint: string) {
-    const refreshSession = await this.refreshSessionsService.findOneBy({
+    const refreshSession = await this.refreshSessionsService.findSession({
       id: refreshToken,
     });
 

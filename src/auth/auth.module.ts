@@ -12,6 +12,7 @@ import { JwtStrategy, LocalStrategy } from './strategies';
 import { RefreshSessionsService } from './refresh-sessions.service';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards';
+import { RefreshSessionsRepository } from './refresh-sessions.repository';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { JwtAuthGuard } from './guards';
   providers: [
     AuthService,
     RefreshSessionsService,
+    RefreshSessionsRepository,
     LocalStrategy,
     JwtStrategy,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
