@@ -1,11 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Request } from 'express';
+import { AuthRequest, AuthUser } from 'src/auth/utils/types';
 
 export const User = createParamDecorator(
-  (prop: string, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest<Request>();
-    const user = request.user;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  (prop: keyof AuthUser, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest<AuthRequest>();
+    const { user } = request;
     return prop ? user?.[prop] : user;
   },
 );

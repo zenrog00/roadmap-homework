@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AUTH_MODULE_OPTIONS } from '../auth.module-definition';
 import type { AuthModuleOptions } from '../auth.module-options';
+import { AuthUser } from '../utils/types';
 
 interface JwtStrategyPayload {
   sub: string;
@@ -21,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtStrategyPayload) {
+  validate(payload: JwtStrategyPayload): AuthUser {
     return { id: payload.sub, username: payload.username };
   }
 }
