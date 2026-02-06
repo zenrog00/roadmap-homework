@@ -38,7 +38,6 @@ export class UsersController {
     if (!user) {
       throw new NotFoundException("User's data not found!");
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userData } = user;
     return userData;
   }
