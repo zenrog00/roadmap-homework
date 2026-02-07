@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { INestApplication } from '@nestjs/common';
 import { AxiosInstance, AxiosResponse } from 'axios';
 import { axiosInstanceSetup, getAppPort, testingAppSetup } from './utils/setup';
@@ -7,6 +6,7 @@ import { generateUserDto } from './utils/users';
 import { uuidRegex } from './utils/regex';
 import { extractRefreshToken } from './utils/auth';
 import { Server } from 'node:net';
+import { AuthResponseDto } from 'src/auth/dtos';
 
 let app: INestApplication<Server>;
 let api: AxiosInstance;
@@ -28,8 +28,10 @@ describe('USERS', () => {
 
   beforeEach(async () => {
     userDto = generateUserDto();
-    const registerResponse = await api.post('auth/register', userDto);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const registerResponse = await api.post<AuthResponseDto>(
+      'auth/register',
+      userDto,
+    );
     accessToken = registerResponse.data.accessToken;
     refreshToken = extractRefreshToken(registerResponse).refreshToken;
   });
@@ -41,7 +43,7 @@ describe('USERS', () => {
       });
       expect(userResponse.status).toBe(200);
       expect(userResponse.data).toEqual({
-        id: expect.stringMatching(uuidRegex),
+        id: expect.stringMatching(uuidRegex) as string,
         username: userDto.username,
         email: userDto.email,
         birthdate: userDto.birthdate.toISOString().split('T')[0],
@@ -74,18 +76,18 @@ describe('USERS', () => {
         expect(usersResponse.status).toBe(200);
 
         expect(usersResponse.data).toMatchObject({
-          data: expect.any(Array),
-          nextCursor: expect.any(String),
+          data: expect.any(Array) as UserResponseDto[],
+          nextCursor: expect.any(String) as string,
         });
 
         expect(usersResponse.data.data.length).toBeGreaterThan(0);
 
         expect(usersResponse.data.data[0]).toMatchObject({
-          id: expect.stringMatching(uuidRegex),
-          username: expect.any(String),
-          email: expect.any(String),
-          birthdate: expect.any(String),
-          description: expect.any(String),
+          id: expect.stringMatching(uuidRegex) as string,
+          username: expect.any(String) as string,
+          email: expect.any(String) as string,
+          birthdate: expect.any(String) as string,
+          description: expect.any(String) as string,
         });
       });
 
@@ -98,13 +100,13 @@ describe('USERS', () => {
         });
 
         expect(usersResponse.data).toEqual({
-          data: expect.any(Array),
+          data: expect.any(Array) as UserResponseDto[],
         });
 
         expect(usersResponse.data.data.length).toBe(1);
 
         expect(usersResponse.data.data[0]).toMatchObject({
-          id: expect.stringMatching(uuidRegex),
+          id: expect.stringMatching(uuidRegex) as string,
           username: userDto.username,
           email: userDto.email,
           birthdate: userDto.birthdate.toISOString().split('T')[0],
