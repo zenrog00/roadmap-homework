@@ -3,12 +3,13 @@ import { jwtRegex, uuidRegex } from '../regex';
 import * as cookie from 'cookie';
 import { INestApplication } from '@nestjs/common';
 import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
+import { AuthResponseDto } from 'src/auth/dtos';
 
-export const expectValidAccessTokenResponse = (response: AxiosResponse) => {
+export const expectValidAccessTokenResponse = (
+  response: AxiosResponse<AuthResponseDto>,
+) => {
   expect(response.data).toHaveProperty('accessToken');
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   expect(typeof response.data.accessToken).toBe('string');
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   expect(response.data.accessToken).toMatch(jwtRegex);
 };
 

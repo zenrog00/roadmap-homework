@@ -14,6 +14,7 @@ import { EnvironmentVariables } from 'src/env';
 import { extractRefreshToken } from './utils/auth';
 import { generateUserDto } from './utils/users';
 import { Server } from 'node:net';
+import { AuthResponseDto } from 'src/auth/dtos';
 
 let app: INestApplication<Server>;
 let api: AxiosInstance;
@@ -37,7 +38,7 @@ describe('AUTH', () => {
 
   describe('POST /auth/register', () => {
     describe('valid user data', () => {
-      let response: AxiosResponse;
+      let response: AxiosResponse<AuthResponseDto>;
 
       beforeEach(async () => {
         response = await api.post('/auth/register', userDto);
@@ -61,14 +62,12 @@ describe('AUTH', () => {
             username: userDto.username,
           },
           headers: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             Authorization: `Bearer ${response.data.accessToken}`,
           },
         });
         const userData = userResponse.data.data[0];
         expect(userData).toEqual({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          id: expect.stringMatching(uuidRegex),
+          id: expect.stringMatching(uuidRegex) as string,
           username: userDto.username,
           email: userDto.email,
           birthdate: userDto.birthdate.toISOString().split('T')[0],
@@ -137,7 +136,7 @@ describe('AUTH', () => {
     });
 
     describe('valid username and password', () => {
-      let response: AxiosResponse;
+      let response: AxiosResponse<AuthResponseDto>;
 
       beforeEach(async () => {
         response = await api.post('auth/login', {
@@ -171,7 +170,6 @@ describe('AUTH', () => {
           data: { id: userId },
         } = await api.get<UserResponseDto>('users/my', {
           headers: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             Authorization: `Bearer ${response.data.accessToken}`,
           },
         });
@@ -213,15 +211,17 @@ describe('AUTH', () => {
     let oldRefreshToken: string | undefined;
 
     beforeEach(async () => {
-      const registerResponse = await api.post('auth/register', userDto);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const registerResponse = await api.post<AuthResponseDto>(
+        'auth/register',
+        userDto,
+      );
       oldAccessToken = registerResponse.data.accessToken;
       ({ refreshToken: oldRefreshToken } =
         extractRefreshToken(registerResponse));
     });
 
     describe('valid refreshToken', () => {
-      let refreshResponse: AxiosResponse;
+      let refreshResponse: AxiosResponse<AuthResponseDto>;
 
       beforeEach(async () => {
         refreshResponse = await api.post(
@@ -248,7 +248,6 @@ describe('AUTH', () => {
       });
 
       it('should return different tokens', () => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         expect(oldAccessToken).not.toBe(refreshResponse.data.accessToken);
         const { refreshToken: newRefreshToken } =
           extractRefreshToken(refreshResponse);
@@ -322,8 +321,10 @@ describe('AUTH', () => {
     let refreshToken: string | undefined;
 
     beforeEach(async () => {
-      const registerResponse = await api.post('auth/register', userDto);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const registerResponse = await api.post<AuthResponseDto>(
+        'auth/register',
+        userDto,
+      );
       accessToken = registerResponse.data.accessToken;
       refreshToken = extractRefreshToken(registerResponse).refreshToken;
     });
@@ -406,8 +407,10 @@ describe('AUTH', () => {
     let userId: string;
 
     beforeEach(async () => {
-      const registerResponse = await api.post('auth/register', userDto);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const registerResponse = await api.post<AuthResponseDto>(
+        'auth/register',
+        userDto,
+      );
       accessToken = registerResponse.data.accessToken;
       refreshToken = extractRefreshToken(registerResponse).refreshToken;
       ({
