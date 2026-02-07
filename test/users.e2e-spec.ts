@@ -1,19 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { INestApplication } from '@nestjs/common';
 import { AxiosInstance, AxiosResponse } from 'axios';
-import { axiosInstanceSetup, testingAppSetup } from './utils/setup';
+import { axiosInstanceSetup, getAppPort, testingAppSetup } from './utils/setup';
 import { GetUsersResponseDto, UserDto, UserResponseDto } from 'src/users/dtos';
 import { generateUserDto } from './utils/users';
 import { uuidRegex } from './utils/regex';
 import { extractRefreshToken } from './utils/auth';
+import { Server } from 'node:net';
 
-let app: INestApplication;
+let app: INestApplication<Server>;
 let api: AxiosInstance;
 
 beforeAll(async () => {
   app = await testingAppSetup();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  const port = app.getHttpServer().address().port as number;
+  const port = getAppPort(app);
   api = axiosInstanceSetup(port);
 });
 
