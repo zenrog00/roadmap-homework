@@ -39,4 +39,22 @@ export class EnvironmentVariables {
   ACCESS_TOKEN_EXPIRES_IN: StringValue = '15m';
   REFRESH_TOKEN_EXPIRES_IN: StringValue = '30d';
   MAX_USER_SESSIONS = 5;
+
+  @IsNotEmpty()
+  @IsUrl({ require_tld: false })
+  MINIO_HOST: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(65535)
+  MINIO_PORT: number;
+
+  @IsNotEmpty()
+  MINIO_ROOT_USER: string;
+
+  @IsNotEmpty()
+  MINIO_ROOT_PASSWORD: string;
+
+  @IsNotEmpty()
+  MINIO_USERS_AVATARS_BUCKET: string;
 }
