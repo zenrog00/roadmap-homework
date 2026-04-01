@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { StorageEngine } from 'multer';
 import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import { Request } from 'express';
 import type {
   OptionCallback,
@@ -11,8 +12,14 @@ import type {
 export interface S3StorageOptions {
   s3Client: S3Client;
   bucket: string | OptionCallback<string>;
-  filename?: OptionCallback<string>;
+  filename: OptionCallback<string>;
 }
+
+export type S3StorageFileInfo = Partial<Express.Multer.File> & {
+  bucket: string;
+  key: string;
+};
+export type UploadedS3File = Express.Multer.File & S3StorageFileInfo;
 
 class S3StorageEngine implements StorageEngine {
   constructor(private readonly options: S3StorageOptions) {}
@@ -22,7 +29,29 @@ class S3StorageEngine implements StorageEngine {
     file: Express.Multer.File,
     cb: (error?: any, info?: Partial<Express.Multer.File>) => void,
   ): void {
-    throw new Error('Method not implemented.');
+    (async () => {
+      const bucket = await this.resolveOption('bucket', req, file);
+      const filename = await this.resolveOption('filename', req, file);
+
+      const upload = new Upload({
+        client: this.options.s3Client,
+        params: {
+          Bucket: bucket,
+          Key: filename,
+          Body: file.stream,
+          ContentType: file.mimetype,
+        },
+      });
+
+      await upload.done();
+
+      const info: S3StorageFileInfo = {
+        bucket,
+        key: filename,
+      };
+
+      cb(null, info);
+    })().catch(cb);
   }
 
   _removeFile(
@@ -56,4 +85,9 @@ class S3StorageEngine implements StorageEngine {
       });
     });
   }
+}
+
+// creating factory function to comply to multer code and naming conventions
+export function s3Storage(options: S3StorageOptions): StorageEngine {
+  return new S3StorageEngine(options);
 }
