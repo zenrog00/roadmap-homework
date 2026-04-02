@@ -2,6 +2,8 @@ import { StorageEngine } from 'multer';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Request } from 'express';
+import { validateFiletypeFromStream } from './utils/filetype-validator';
+
 import type {
   OptionCallback,
   KeysWithOptionCallback,
@@ -9,7 +11,7 @@ import type {
   DefinedResolvedOption,
 } from './types';
 
-type AllowedFiletypes = readonly string[];
+export type AllowedFiletypes = readonly string[];
 
 export interface S3StorageOptions {
   s3Client: S3Client;
@@ -35,13 +37,19 @@ class S3StorageEngine implements StorageEngine {
     (async () => {
       const bucket = await this.resolveOption('bucket', req, file);
       const filename = await this.resolveOption('filename', req, file);
+      const filetypes = await this.resolveOption('filetypes', req, file);
+
+      const { uploadStream } = await validateFiletypeFromStream(
+        file.stream,
+        filetypes,
+      );
 
       const upload = new Upload({
         client: this.options.s3Client,
         params: {
           Bucket: bucket,
           Key: filename,
-          Body: file.stream,
+          Body: uploadStream,
           ContentType: file.mimetype,
         },
       });
