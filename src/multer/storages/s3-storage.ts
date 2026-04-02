@@ -2,14 +2,10 @@ import { StorageEngine } from 'multer';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Request } from 'express';
+import { StorageTemplate } from './storage-template';
 import { validateFiletypeFromStream } from './utils/filetype-validator';
 
-import type {
-  OptionCallback,
-  KeysWithOptionCallback,
-  ResolvedOption,
-  DefinedResolvedOption,
-} from './types';
+import type { OptionCallback } from './types';
 
 export type AllowedFiletypes = readonly string[];
 
@@ -26,8 +22,10 @@ export type S3StorageFileInfo = Partial<Express.Multer.File> & {
 };
 export type UploadedS3File = Express.Multer.File & S3StorageFileInfo;
 
-class S3StorageEngine implements StorageEngine {
-  constructor(private readonly options: S3StorageOptions) {}
+class S3StorageEngine extends StorageTemplate<S3StorageOptions> {
+  constructor(options: S3StorageOptions) {
+    super(options);
+  }
 
   _handleFile(
     req: Request,
@@ -89,36 +87,6 @@ class S3StorageEngine implements StorageEngine {
 
       cb(null);
     })().catch(cb);
-  }
-
-  private resolveOption<T extends KeysWithOptionCallback<S3StorageOptions>>(
-    option: T,
-    req: Request,
-    file: Express.Multer.File,
-  ): Promise<ResolvedOption<S3StorageOptions[T]>> {
-    const optionValue = this.options[option];
-
-    if (optionValue === undefined || typeof optionValue !== 'function') {
-      return Promise.resolve(
-        optionValue as ResolvedOption<S3StorageOptions[T]>,
-      );
-    }
-
-    // we need type assertion to narrow the type of the option value
-    // to the OptionCallback type
-    const callbackOption = optionValue as OptionCallback<
-      DefinedResolvedOption<S3StorageOptions[T]>
-    >;
-
-    return new Promise((resolve, reject) => {
-      callbackOption(req, file, (error, value) => {
-        if (error) {
-          return reject(error);
-        }
-
-        resolve(value as ResolvedOption<S3StorageOptions[T]>);
-      });
-    });
   }
 }
 
