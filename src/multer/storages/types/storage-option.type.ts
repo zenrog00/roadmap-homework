@@ -25,3 +25,6 @@ export type KeysWithOptionCallback<T> = {
 // if it is OptionCallback, uses that callback's value type parameter
 // otherwise leaves the type unchanged
 export type ResolvedOption<T> = T extends OptionCallback<infer U> ? U : T;
+
+// needed so optional options don't widen callback unions and break inference
+export type DefinedResolvedOption<T> = ResolvedOption<Exclude<T, undefined>>;

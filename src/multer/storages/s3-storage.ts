@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { StorageEngine } from 'multer';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -7,12 +6,16 @@ import type {
   OptionCallback,
   KeysWithOptionCallback,
   ResolvedOption,
+  DefinedResolvedOption,
 } from './types';
+
+type AllowedFiletypes = readonly string[];
 
 export interface S3StorageOptions {
   s3Client: S3Client;
   bucket: string | OptionCallback<string>;
   filename: string | OptionCallback<string>;
+  filetypes?: AllowedFiletypes | OptionCallback<AllowedFiletypes>;
 }
 
 export type S3StorageFileInfo = Partial<Express.Multer.File> & {
@@ -60,6 +63,7 @@ class S3StorageEngine implements StorageEngine {
     file: Express.Multer.File,
     cb: (error: Error | null) => void,
   ): void {
+    console.log('Removing file from S3');
     (async () => {
       const s3File = file as Express.Multer.File & Partial<S3StorageFileInfo>;
 
@@ -86,14 +90,20 @@ class S3StorageEngine implements StorageEngine {
   ): Promise<ResolvedOption<S3StorageOptions[T]>> {
     const optionValue = this.options[option];
 
-    if (!optionValue || typeof optionValue !== 'function') {
+    if (optionValue === undefined || typeof optionValue !== 'function') {
       return Promise.resolve(
         optionValue as ResolvedOption<S3StorageOptions[T]>,
       );
     }
 
+    // we need type assertion to narrow the type of the option value
+    // to the OptionCallback type
+    const callbackOption = optionValue as OptionCallback<
+      DefinedResolvedOption<S3StorageOptions[T]>
+    >;
+
     return new Promise((resolve, reject) => {
-      optionValue(req, file, (error, value) => {
+      callbackOption(req, file, (error, value) => {
         if (error) {
           return reject(error);
         }
