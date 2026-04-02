@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { StorageEngine } from 'multer';
-import { S3Client } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Request } from 'express';
 import type {
@@ -12,7 +12,7 @@ import type {
 export interface S3StorageOptions {
   s3Client: S3Client;
   bucket: string | OptionCallback<string>;
-  filename: OptionCallback<string>;
+  filename: string | OptionCallback<string>;
 }
 
 export type S3StorageFileInfo = Partial<Express.Multer.File> & {
@@ -50,6 +50,7 @@ class S3StorageEngine implements StorageEngine {
         key: filename,
       };
 
+      console.log('Uploaded file to S3');
       cb(null, info);
     })().catch(cb);
   }
@@ -57,9 +58,25 @@ class S3StorageEngine implements StorageEngine {
   _removeFile(
     req: Request,
     file: Express.Multer.File,
-    callback: (error: Error | null) => void,
+    cb: (error: Error | null) => void,
   ): void {
-    throw new Error('Method not implemented.');
+    (async () => {
+      const s3File = file as Express.Multer.File & Partial<S3StorageFileInfo>;
+
+      if (!s3File.bucket || !s3File.key) {
+        cb(null);
+        return;
+      }
+
+      await this.options.s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: s3File.bucket,
+          Key: s3File.key,
+        }),
+      );
+
+      cb(null);
+    })().catch(cb);
   }
 
   private resolveOption<T extends KeysWithOptionCallback<S3StorageOptions>>(
