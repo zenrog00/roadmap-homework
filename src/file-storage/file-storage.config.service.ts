@@ -13,15 +13,25 @@ export class FilesStorageConfigService implements FileStorageOptionsFactory {
   ) {}
 
   createFileStorageOptions(): FileStorageModuleOptions {
+    const host = this.configService.get('MINIO_HOST', { infer: true });
+    const port = this.configService.get('MINIO_PORT', { infer: true });
+    const endpoint = `http://${host}:${port}`;
+
     return [
       {
         driver: 's3',
-        host: this.configService.get('MINIO_HOST', { infer: true }),
-        port: this.configService.get('MINIO_PORT', { infer: true }),
-        rootUser: this.configService.get('MINIO_ROOT_USER', { infer: true }),
-        rootPassword: this.configService.get('MINIO_ROOT_PASSWORD', {
-          infer: true,
-        }),
+        client: {
+          endpoint,
+          region: 'ru-central1',
+          credentials: {
+            accessKeyId: this.configService.get('MINIO_ROOT_USER', {
+              infer: true,
+            }),
+            secretAccessKey: this.configService.get('MINIO_ROOT_PASSWORD', {
+              infer: true,
+            }),
+          },
+        },
       },
     ];
   }
