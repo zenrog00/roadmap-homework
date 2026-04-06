@@ -1,9 +1,8 @@
 import { FileStorage } from 'src/file-storage/file-storage';
-import { DiskStorageOptions } from './s3-storage.options';
 import { Readable } from 'node:stream';
 
 export class DiskStorage extends FileStorage {
-  constructor(private readonly options: DiskStorageOptions) {
+  constructor() {
     super();
   }
 
