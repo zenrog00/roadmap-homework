@@ -1,5 +1,7 @@
+import { Readable } from 'node:stream';
+
 export abstract class FileStorage {
-  abstract uploadFile();
+  abstract getFile(): Promise<Readable> | Readable;
 
   abstract removeFile();
 }
