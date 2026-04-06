@@ -14,7 +14,7 @@ export type FileStorageClientByDriver<D extends FileStorageDriver> =
   // about when to pass client to storage constructor
   FileStorageClientByDriverMap[D];
 
-type FileStorageClientOptionsByDriver<D extends FileStorageDriver> =
+export type FileStorageClientOptionsByDriver<D extends FileStorageDriver> =
   FileStorageOptionsByDriver<D>['client'];
 
 type FileStorageClientCreatorByDriver = {

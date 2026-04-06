@@ -1,7 +1,23 @@
-import { Module, DynamicModule, Provider } from '@nestjs/common';
-import { FileStorageModuleOptions } from './interfaces/file-storage.options';
-import { getFileStorageToken } from './utils/file-storage.utils';
+import {
+  Module,
+  DynamicModule,
+  Provider,
+  FactoryProvider,
+} from '@nestjs/common';
+import {
+  FileStorageDriver,
+  FileStorageModuleOptions,
+} from './interfaces/file-storage.options';
+import {
+  getFileStorageClientToken,
+  getFileStorageToken,
+} from './utils/file-storage.utils';
 import { FILE_STORAGE_OPTIONS } from './constants';
+import {
+  createFileStorageClient,
+  FileStorageClientByDriver,
+  FileStorageClientOptionsByDriver,
+} from './factories/file-storage-client.factory';
 
 @Module({})
 export class FileStorageCoreModule {
@@ -23,14 +39,48 @@ export class FileStorageCoreModule {
     });
   }
 
-  private static createAsyncOptionsProviders(
+  private static createFileStorageAsyncProviders(
     options: FileStorageModuleOptions,
   ): Provider[] {
-    return [
-      {
-        provide: FILE_STORAGE_OPTIONS,
-        useFactory: () => options,
-      },
+    const fileStorageAsyncProviders: Provider[] = [
+      this.createAsyncOptionsProvider(options),
     ];
+
+    const namespacesCount = new Map<string, number>();
+
+    options.forEach(({ driver, namespace = 'default', client }) => {
+      if (namespacesCount.has(namespace)) {
+        throw new Error(`File storage namespace ${namespace} is not unique!`);
+      }
+      namespacesCount.set(namespace, 1);
+
+      fileStorageAsyncProviders.push(
+        ...(client
+          ? [this.createFileStorageClientProvider(driver, client, namespace)]
+          : []),
+      );
+    });
+
+    return fileStorageAsyncProviders;
+  }
+
+  private static createAsyncOptionsProvider(
+    options: FileStorageModuleOptions,
+  ): FactoryProvider<FileStorageModuleOptions> {
+    return {
+      provide: FILE_STORAGE_OPTIONS,
+      useFactory: () => options,
+    };
+  }
+
+  private static createFileStorageClientProvider<D extends FileStorageDriver>(
+    driver: D,
+    options: FileStorageClientOptionsByDriver<D>,
+    namespace?: string,
+  ): FactoryProvider<FileStorageClientByDriver<D>> {
+    return {
+      provide: getFileStorageClientToken(namespace),
+      useFactory: () => createFileStorageClient(driver, options),
+    };
   }
 }
