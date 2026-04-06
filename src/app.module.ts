@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { FilesStorageConfigService, FileStorageModule } from './file-storage';
 
 @Module({
   imports: [
@@ -23,6 +24,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     ScheduleModule.forRoot(),
     AuthModule.forRootAsync({ useClass: AuthModuleOptionsFactory }),
     UsersModule,
+    FileStorageModule.forRootAsync({
+      useClass: FilesStorageConfigService,
+    }),
   ],
 })
 export class AppModule {}

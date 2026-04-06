@@ -21,9 +21,7 @@ export type FileStorageOptionsByDriver<D extends FileStorageDriver> = Extract<
 >;
 
 export interface FileStorageOptionsFactory {
-  createFileStorageOptions():
-    | Promise<FileStorageModuleOptions>
-    | FileStorageModuleOptions;
+  createFileStorageOptions(): FileStorageModuleOptions;
 }
 
 export interface FileStorageAsyncOptions {

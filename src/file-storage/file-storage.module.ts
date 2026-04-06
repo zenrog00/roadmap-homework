@@ -1,7 +1,7 @@
 import { Module, DynamicModule, FactoryProvider } from '@nestjs/common';
 import {
+  FileStorageAsyncOptions,
   FileStorageDriver,
-  FileStorageModuleOptions,
   FileStorageOptions,
 } from './interfaces/file-storage.options';
 import { FileStorageCoreModule } from './file-storage-core.module';
@@ -22,7 +22,7 @@ import { FileStorageClientByDriver } from './factories/file-storage-client.facto
 
 @Module({})
 export class FileStorageModule {
-  static forRootAsync(options: FileStorageModuleOptions): DynamicModule {
+  static forRootAsync(options: FileStorageAsyncOptions): DynamicModule {
     return {
       module: FileStorageModule,
       imports: [FileStorageCoreModule.forRootAsync(options)],
