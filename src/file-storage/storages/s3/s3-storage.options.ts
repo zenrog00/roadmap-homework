@@ -1,15 +1,18 @@
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
+import type { S3ClientConfig } from '@aws-sdk/client-s3';
+import type { FileStorageBaseOptions } from 'src/file-storage/interfaces/file-storage.options';
 
-export interface S3StorageOptions {
-  // optional name for differentianting storages
-  // when multiple storages are used with the same driver
-  namespace?: string;
-  driver: 's3';
-  host: string;
-  port: number;
-  rootUser: string;
-  rootPassword: string;
-}
+export type S3StorageClientOptions = S3ClientConfig;
+
+export type FileStorageClientByDriverMap = {
+  s3: S3StorageClientOptions;
+  disk: undefined;
+};
+
+export type S3StorageOptions = FileStorageBaseOptions<
+  's3',
+  FileStorageClientByDriverMap['s3']
+>;
 
 export type S3StorageMulterOptions = Omit<
   MulterOptions,
@@ -20,12 +23,7 @@ export type S3StorageMulterOptions = Omit<
   filetypes?: readonly string[];
 };
 
-export interface DiskStorageOptions {
-  namespace?: string;
-  driver: 'disk';
-  host: string;
-  port: number;
-  rootUser: string;
-  rootPassword: string;
-  multerOptions?: S3StorageMulterOptions;
-}
+export type DiskStorageOptions = FileStorageBaseOptions<
+  'disk',
+  FileStorageClientByDriverMap['disk']
+>;
