@@ -18,6 +18,11 @@ import {
   FileStorageClientByDriver,
   FileStorageClientOptionsByDriver,
 } from './factories/file-storage-client.factory';
+import { FileStorage } from './file-storage';
+import {
+  createFileStorage,
+  FileStorageClientArg,
+} from './factories/file-storage.factory';
 
 @Module({})
 export class FileStorageCoreModule {
@@ -55,9 +60,11 @@ export class FileStorageCoreModule {
       namespacesCount.set(namespace, 1);
 
       fileStorageAsyncProviders.push(
+        // creating client first because it may be required by storage
         ...(client
           ? [this.createFileStorageClientProvider(driver, client, namespace)]
           : []),
+        this.createFileStorageProvider(driver, namespace),
       );
     });
 
@@ -81,6 +88,21 @@ export class FileStorageCoreModule {
     return {
       provide: getFileStorageClientToken(namespace),
       useFactory: () => createFileStorageClient(driver, options),
+    };
+  }
+
+  private static createFileStorageProvider<D extends FileStorageDriver>(
+    driver: D,
+    namespace?: string,
+  ): FactoryProvider<FileStorage> {
+    return {
+      inject: [{ token: getFileStorageClientToken(namespace), optional: true }],
+      provide: getFileStorageToken(namespace),
+      useFactory: (client: FileStorageClientByDriver<D>) =>
+        createFileStorage(
+          driver,
+          ...((client ? [client] : []) as FileStorageClientArg<D>),
+        ),
     };
   }
 }

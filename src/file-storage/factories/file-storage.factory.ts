@@ -19,7 +19,7 @@ const FILE_STORAGE_CLASSES: FileStorageCtorsMapping = {
 
 // strong typing for storage client argument based on driver
 // (does storage require client in its constructor)
-type FileStorageClientArg<D extends FileStorageDriver> =
+export type FileStorageClientArg<D extends FileStorageDriver> =
   FileStorageClientByDriver<D> extends never
     ? []
     : [client: FileStorageClientByDriver<D>];
