@@ -14,9 +14,12 @@ export type FileStorageClientByDriver<D extends FileStorageDriver> =
   // about when to pass client to storage constructor
   FileStorageClientByDriverMap[D];
 
+type FileStorageClientOptionsByDriver<D extends FileStorageDriver> =
+  FileStorageOptionsByDriver<D>['client'];
+
 type FileStorageClientCreatorByDriver = {
   [D in FileStorageDriver]: (
-    options: FileStorageOptionsByDriver<D>,
+    options: FileStorageClientOptionsByDriver<D>,
   ) => FileStorageClientByDriver<D>;
 };
 
@@ -28,7 +31,8 @@ const FILE_STORAGE_CLIENT_CREATORS: FileStorageClientCreatorByDriver = {
 };
 
 export function createFileStorageClient<D extends FileStorageDriver>(
-  options: FileStorageOptionsByDriver<D>,
+  driver: D,
+  options: FileStorageClientOptionsByDriver<D>,
 ): FileStorageClientByDriver<D> {
-  return FILE_STORAGE_CLIENT_CREATORS[options.driver](options);
+  return FILE_STORAGE_CLIENT_CREATORS[driver](options);
 }
