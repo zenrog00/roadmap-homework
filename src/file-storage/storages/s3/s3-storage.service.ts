@@ -1,10 +1,10 @@
-import { FileStorage } from 'src/file-storage/file-storage';
+import { FileStorageService } from 'src/file-storage/file-storage.service';
 import { Readable } from 'node:stream';
 import type { S3Client } from '@aws-sdk/client-s3';
 
-export type S3StorageCtorArgs = ConstructorParameters<typeof S3Storage>;
+export type S3StorageCtorArgs = ConstructorParameters<typeof S3StorageService>;
 
-export class S3Storage extends FileStorage {
+export class S3StorageService extends FileStorageService {
   constructor(private readonly client: S3Client) {
     super();
   }

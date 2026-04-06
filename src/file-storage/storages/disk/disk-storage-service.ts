@@ -1,7 +1,7 @@
-import { FileStorage } from 'src/file-storage/file-storage';
+import { FileStorageService } from 'src/file-storage/file-storage.service';
 import { Readable } from 'node:stream';
 
-export class DiskStorage extends FileStorage {
+export class DiskStorage extends FileStorageService {
   constructor() {
     super();
   }

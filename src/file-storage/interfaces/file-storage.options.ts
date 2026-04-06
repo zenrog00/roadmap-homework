@@ -1,8 +1,6 @@
 import { Type } from '@nestjs/common';
-import type {
-  S3StorageOptions,
-  DiskStorageOptions,
-} from '../storages/s3/s3-storage.options';
+import type { S3StorageOptions } from '../storages/s3/s3-storage.options';
+import { DiskStorageOptions } from '../storages/disk';
 
 export interface FileStorageBaseOptions<D extends FileStorageDriver, C> {
   namespace?: string;

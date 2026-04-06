@@ -22,8 +22,3 @@ export type S3StorageMulterOptions = Omit<
   filename: string;
   filetypes?: readonly string[];
 };
-
-export type DiskStorageOptions = FileStorageBaseOptions<
-  'disk',
-  FileStorageClientByDriverMap['disk']
->;
