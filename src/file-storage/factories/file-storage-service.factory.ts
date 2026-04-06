@@ -1,28 +1,26 @@
 import { FileStorageDriver } from '../interfaces/file-storage.options';
 import { FileStorageService } from '../file-storage.service';
 import { S3StorageService } from '../storages/s3/s3-storage.service';
-import { DiskStorage } from '../storages/disk/disk-storage-service';
+import { DiskStorageService } from '../storages/disk/disk-storage-service';
 import { FileStorageClientByDriver } from './file-storage-client.factory';
 
-type FileStorageServiceCtorByDriver<D extends FileStorageDriver> = new (
-  client?: FileStorageClientByDriver<D>,
-) => FileStorageService;
-
-type FileStorageServiceCtorsMapping = {
-  [D in FileStorageDriver]: FileStorageServiceCtorByDriver<D>;
-};
-
-const FILE_STORAGE_SERVICE_CLASSES: FileStorageServiceCtorsMapping = {
-  s3: S3StorageService,
-  disk: DiskStorage, // placeholder for now
-};
-
 // strong typing for storage client argument based on driver
-// (does storage require client in its constructor)
+// (does storage require client in its constructor?)
 export type FileStorageClientArg<D extends FileStorageDriver> =
   FileStorageClientByDriver<D> extends never
     ? []
     : [client: FileStorageClientByDriver<D>];
+
+type FileStorageServiceCreatorByDriver = {
+  [D in FileStorageDriver]: (
+    ...clientArg: FileStorageClientArg<D>
+  ) => FileStorageService;
+};
+
+const FILE_STORAGE_SERVICE_CREATORS: FileStorageServiceCreatorByDriver = {
+  s3: (...clientArg) => new S3StorageService(...clientArg),
+  disk: () => new DiskStorageService(), // placeholder for now
+};
 
 export function createFileStorageService<D extends FileStorageDriver>(
   driver: D,
@@ -30,9 +28,5 @@ export function createFileStorageService<D extends FileStorageDriver>(
   // strict number of arguments based on FileStorageClientArg type
   ...clientArg: FileStorageClientArg<D>
 ): FileStorageService {
-  const FileStorageClass = FILE_STORAGE_SERVICE_CLASSES[driver];
-  if (!FileStorageClass) {
-    throw new Error(`File storage driver ${driver} not found`);
-  }
-  return new FileStorageClass(clientArg[0]);
+  return FILE_STORAGE_SERVICE_CREATORS[driver](...clientArg);
 }
