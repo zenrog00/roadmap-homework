@@ -9,7 +9,7 @@ type MulterStorageOptionsByDriverMap = {
   disk: never;
 };
 
-export type MulterOptionsByDriver<D extends FileStorageDriver> =
+export type MulterStorageOptionsByDriver<D extends FileStorageDriver> =
   MulterStorageOptionsByDriverMap[D];
 
 type MulterStorageDepByDriverMap = {
@@ -20,14 +20,14 @@ type MulterStorageDepByDriverMap = {
 type MulterStorageDepByDriver<D extends FileStorageDriver> =
   MulterStorageDepByDriverMap[D];
 
-type MulterStorageDepArg<D extends FileStorageDriver> =
+export type MulterStorageDepArg<D extends FileStorageDriver> =
   MulterStorageDepByDriver<D> extends never
     ? []
     : [dep: MulterStorageDepByDriver<D>];
 
 type MulterStorageCreatorByDriver = {
   [D in FileStorageDriver]: (
-    options: MulterOptionsByDriver<D>,
+    options: MulterStorageOptionsByDriver<D>,
     ...depArg: MulterStorageDepArg<D>
   ) => StorageEngine;
 };
@@ -41,7 +41,7 @@ const MULTER_STORAGE_CREATORS: MulterStorageCreatorByDriver = {
 
 export function createMulterStorage<D extends FileStorageDriver>(
   driver: D,
-  options: MulterOptionsByDriver<D>,
+  options: MulterStorageOptionsByDriver<D>,
   ...depArg: MulterStorageDepArg<D>
 ): StorageEngine {
   return MULTER_STORAGE_CREATORS[driver](options, ...depArg);

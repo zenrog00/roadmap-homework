@@ -100,7 +100,7 @@ export class FileStorageCoreModule {
     return {
       inject: [{ token: getFileStorageClientToken(namespace), optional: true }],
       provide: getFileStorageServiceToken(namespace),
-      useFactory: (client: FileStorageClientByDriver<D>) =>
+      useFactory: (client?: FileStorageClientByDriver<D>) =>
         createFileStorageService(
           driver,
           ...((client ? [client] : []) as FileStorageClientArg<D>),
