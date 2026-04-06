@@ -1,19 +1,19 @@
 import { FileStorageDriver } from '../interfaces/file-storage.options';
-import { FileStorage } from '../file-storage';
-import { S3Storage } from '../storages/s3/s3-storage';
-import { DiskStorage } from '../storages/s3/disk-storage';
+import { FileStorageService } from '../file-storage.service';
+import { S3StorageService } from '../storages/s3/s3-storage.service';
+import { DiskStorage } from '../storages/disk/disk-storage-service';
 import { FileStorageClientByDriver } from './file-storage-client.factory';
 
-type FileStorageCtorByDriver<D extends FileStorageDriver> = new (
+type FileStorageServiceCtorByDriver<D extends FileStorageDriver> = new (
   client?: FileStorageClientByDriver<D>,
-) => FileStorage;
+) => FileStorageService;
 
-type FileStorageCtorsMapping = {
-  [D in FileStorageDriver]: FileStorageCtorByDriver<D>;
+type FileStorageServiceCtorsMapping = {
+  [D in FileStorageDriver]: FileStorageServiceCtorByDriver<D>;
 };
 
-const FILE_STORAGE_CLASSES: FileStorageCtorsMapping = {
-  s3: S3Storage,
+const FILE_STORAGE_SERVICE_CLASSES: FileStorageServiceCtorsMapping = {
+  s3: S3StorageService,
   disk: DiskStorage, // placeholder for now
 };
 
@@ -24,13 +24,13 @@ export type FileStorageClientArg<D extends FileStorageDriver> =
     ? []
     : [client: FileStorageClientByDriver<D>];
 
-export function createFileStorage<D extends FileStorageDriver>(
+export function createFileStorageService<D extends FileStorageDriver>(
   driver: D,
   // clientArg is tuple because this provides
   // strict number of arguments based on FileStorageClientArg type
   ...clientArg: FileStorageClientArg<D>
-): FileStorage {
-  const FileStorageClass = FILE_STORAGE_CLASSES[driver];
+): FileStorageService {
+  const FileStorageClass = FILE_STORAGE_SERVICE_CLASSES[driver];
   if (!FileStorageClass) {
     throw new Error(`File storage driver ${driver} not found`);
   }

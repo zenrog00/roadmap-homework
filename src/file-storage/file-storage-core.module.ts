@@ -7,7 +7,7 @@ import {
 import {
   getFileStorageClientToken,
   getFileStorageOptionsToken,
-  getFileStorageToken,
+  getFileStorageServiceToken,
 } from './utils/file-storage.utils';
 import { FILE_STORAGE_OPTIONS } from './constants';
 import {
@@ -15,11 +15,11 @@ import {
   FileStorageClientByDriver,
   FileStorageClientOptionsByDriver,
 } from './factories/file-storage-client.factory';
-import { FileStorage } from './file-storage';
+import { FileStorageService } from './file-storage.service';
 import {
-  createFileStorage,
+  createFileStorageService,
   FileStorageClientArg,
-} from './factories/file-storage.factory';
+} from './factories/file-storage-service.factory';
 
 @Module({})
 export class FileStorageCoreModule {
@@ -57,7 +57,7 @@ export class FileStorageCoreModule {
         ...(client
           ? [this.createFileStorageClientProvider(driver, client, namespace)]
           : []),
-        this.createFileStorageProvider(driver, namespace),
+        this.createFileStorageServiceProvider(driver, namespace),
       );
     });
 
@@ -93,15 +93,15 @@ export class FileStorageCoreModule {
     };
   }
 
-  private static createFileStorageProvider<D extends FileStorageDriver>(
+  private static createFileStorageServiceProvider<D extends FileStorageDriver>(
     driver: D,
     namespace?: string,
-  ): FactoryProvider<FileStorage> {
+  ): FactoryProvider<FileStorageService> {
     return {
       inject: [{ token: getFileStorageClientToken(namespace), optional: true }],
-      provide: getFileStorageToken(namespace),
+      provide: getFileStorageServiceToken(namespace),
       useFactory: (client: FileStorageClientByDriver<D>) =>
-        createFileStorage(
+        createFileStorageService(
           driver,
           ...((client ? [client] : []) as FileStorageClientArg<D>),
         ),

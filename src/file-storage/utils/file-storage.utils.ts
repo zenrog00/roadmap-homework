@@ -1,4 +1,4 @@
-export function getFileStorageToken(namespace?: string) {
+export function getFileStorageServiceToken(namespace?: string) {
   return `${namespace?.toUpperCase() || 'DEFAULT'}_FILE_STORAGE`;
 }
 
