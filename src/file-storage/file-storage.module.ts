@@ -21,10 +21,10 @@ import {
 import { FileStorageClientByDriver } from './factories/file-storage-client.factory';
 
 @Module({})
-export class FilesStorageModule {
+export class FileStorageModule {
   static forRootAsync(options: FileStorageModuleOptions): DynamicModule {
     return {
-      module: FilesStorageModule,
+      module: FileStorageModule,
       imports: [FileStorageCoreModule.forRootAsync(options)],
       exports: [FILE_STORAGE_OPTIONS],
     };
@@ -48,7 +48,7 @@ export class FilesStorageModule {
     }
 
     return {
-      module: FilesStorageModule,
+      module: FileStorageModule,
       providers,
       exports,
     };
