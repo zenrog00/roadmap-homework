@@ -1,15 +1,12 @@
-import {
-  Module,
-  DynamicModule,
-  Provider,
-  FactoryProvider,
-} from '@nestjs/common';
+import { Module, DynamicModule, FactoryProvider } from '@nestjs/common';
 import {
   FileStorageDriver,
   FileStorageModuleOptions,
+  FileStorageOptionsByDriver,
 } from './interfaces/file-storage.options';
 import {
   getFileStorageClientToken,
+  getFileStorageOptionsToken,
   getFileStorageToken,
 } from './utils/file-storage.utils';
 import { FILE_STORAGE_OPTIONS } from './constants';
@@ -27,39 +24,35 @@ import {
 @Module({})
 export class FileStorageCoreModule {
   static forRootAsync(options: FileStorageModuleOptions): DynamicModule {
-    const fileStorageOptionsProviders =
-      this.createAsyncOptionsProviders(options);
-    const fileStorageClientProviders: Provider[] = [];
-    const fileStorageProviders: Provider[] = [];
+    const providers = this.createFileStorageAsyncProviders(options);
+    const exports = providers.map(({ provide }) => provide);
 
-    options.forEach((storageOptions) => {
-      const fileStorageToken = getFileStorageToken(
-        storageOptions.driver,
-        storageOptions.namespace,
-      );
-      fileStorageProviders.push({
-        provide: fileStorageToken,
-        useFactory: () => {},
-      });
-    });
+    return {
+      module: FileStorageCoreModule,
+      providers,
+      exports,
+    };
   }
 
   private static createFileStorageAsyncProviders(
     options: FileStorageModuleOptions,
-  ): Provider[] {
-    const fileStorageAsyncProviders: Provider[] = [
+  ): FactoryProvider[] {
+    const fileStorageAsyncProviders: FactoryProvider[] = [
       this.createAsyncOptionsProvider(options),
     ];
 
     const namespacesCount = new Map<string, number>();
 
-    options.forEach(({ driver, namespace = 'default', client }) => {
+    options.forEach((storageOptions) => {
+      const { driver, namespace = 'default', client } = storageOptions;
+
       if (namespacesCount.has(namespace)) {
         throw new Error(`File storage namespace ${namespace} is not unique!`);
       }
       namespacesCount.set(namespace, 1);
 
       fileStorageAsyncProviders.push(
+        this.createFileStorageOptionsProvider(storageOptions),
         // creating client first because it may be required by storage
         ...(client
           ? [this.createFileStorageClientProvider(driver, client, namespace)]
@@ -77,6 +70,15 @@ export class FileStorageCoreModule {
     return {
       provide: FILE_STORAGE_OPTIONS,
       useFactory: () => options,
+    };
+  }
+
+  private static createFileStorageOptionsProvider<D extends FileStorageDriver>(
+    storageOptions: FileStorageOptionsByDriver<D>,
+  ): FactoryProvider<FileStorageOptionsByDriver<D>> {
+    return {
+      provide: getFileStorageOptionsToken(storageOptions.namespace),
+      useFactory: () => storageOptions,
     };
   }
 
