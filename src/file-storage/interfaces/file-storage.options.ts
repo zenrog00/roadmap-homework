@@ -1,4 +1,9 @@
-import { Type } from '@nestjs/common';
+import {
+  DynamicModule,
+  ForwardReference,
+  InjectionToken,
+  Type,
+} from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import type { S3StorageOptions } from '../storages/s3/s3-storage.options';
 import { DiskStorageOptions } from '../storages/disk';
@@ -38,4 +43,14 @@ export interface FileStorageMulterOptions<
 > {
   limits?: MulterOptions['limits'];
   storage: MulterStorageOptionsByDriver<D>;
+}
+
+export interface FileStorageMulterAsyncOptions<
+  D extends FileStorageDriver = FileStorageDriver,
+> {
+  imports?: (Type | DynamicModule | ForwardReference)[];
+  inject?: InjectionToken[];
+  useFactory: (
+    ...args: unknown[]
+  ) => FileStorageMulterOptions<D> | Promise<FileStorageMulterOptions<D>>;
 }
