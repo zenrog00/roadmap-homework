@@ -9,9 +9,7 @@ import {
   getFileStorageClientToken,
   getFileStorageMulterToken,
   getFileStorageOptionsToken,
-  getFileStorageServiceToken,
 } from './utils/file-storage.utils';
-import { FILE_STORAGE_OPTIONS } from './constants';
 import { StorageEngine } from 'multer';
 import {
   createMulterStorage,
@@ -26,7 +24,6 @@ export class FileStorageModule {
     return {
       module: FileStorageModule,
       imports: [FileStorageCoreModule.forRootAsync(options)],
-      exports: [FILE_STORAGE_OPTIONS],
     };
   }
 
@@ -34,23 +31,22 @@ export class FileStorageModule {
     namespace: string = 'default',
     multerOptions?: MulterStorageOptionsByDriver<FileStorageDriver>,
   ): DynamicModule {
-    const storageToken = getFileStorageServiceToken(namespace);
-    const namespaceOptionsToken = getFileStorageOptionsToken(namespace);
-
     const providers: FactoryProvider[] = [];
-    const exports: string[] = [storageToken, namespaceOptionsToken];
 
     if (multerOptions) {
       providers.push(
         this.createMulterStorageProvider(namespace, multerOptions),
       );
-      exports.push(getFileStorageMulterToken(namespace));
     }
 
     return {
       module: FileStorageModule,
+      imports: [FileStorageCoreModule.forFeature(namespace)],
       providers,
-      exports,
+      exports: [
+        FileStorageCoreModule,
+        ...providers.map((p) => p.provide as string),
+      ],
     };
   }
 
