@@ -1,20 +1,20 @@
-import { Module, DynamicModule, FactoryProvider } from '@nestjs/common';
+import { Module, DynamicModule } from '@nestjs/common';
 import {
   FileStorageAsyncOptions,
   FileStorageDriver,
+  FileStorageMulterOptions,
   FileStorageOptions,
 } from './interfaces/file-storage.options';
 import { FileStorageCoreModule } from './file-storage-core.module';
 import {
   getFileStorageClientToken,
-  getFileStorageMulterToken,
   getFileStorageOptionsToken,
 } from './utils/file-storage.utils';
-import { StorageEngine } from 'multer';
+import { MulterModule } from '@nestjs/platform-express';
+import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import {
   createMulterStorage,
   MulterStorageDepArg,
-  MulterStorageOptionsByDriver,
 } from './factories/multer-storage.factory';
 import { FileStorageClientByDriver } from './factories/file-storage-client.factory';
 
@@ -29,48 +29,41 @@ export class FileStorageModule {
 
   static forFeature(
     namespace: string = 'default',
-    multerOptions?: MulterStorageOptionsByDriver<FileStorageDriver>,
+    multerOptions?: FileStorageMulterOptions,
   ): DynamicModule {
-    const providers: FactoryProvider[] = [];
+    const imports: DynamicModule[] = [
+      FileStorageCoreModule.forFeature(namespace),
+    ];
 
     if (multerOptions) {
-      providers.push(
-        this.createMulterStorageProvider(namespace, multerOptions),
+      imports.push(
+        MulterModule.registerAsync({
+          imports: [FileStorageCoreModule.forFeature(namespace)],
+          inject: [
+            getFileStorageOptionsToken(namespace),
+            { token: getFileStorageClientToken(namespace), optional: true },
+          ],
+          useFactory: (
+            { driver }: FileStorageOptions,
+            client?: FileStorageClientByDriver<FileStorageDriver>,
+          ): MulterOptions => ({
+            storage: createMulterStorage(
+              driver,
+              multerOptions.storage,
+              ...((client
+                ? [client]
+                : []) as MulterStorageDepArg<FileStorageDriver>),
+            ),
+            limits: multerOptions.limits,
+          }),
+        }),
       );
     }
 
     return {
       module: FileStorageModule,
-      imports: [FileStorageCoreModule.forFeature(namespace)],
-      providers,
-      exports: [
-        FileStorageCoreModule,
-        ...providers.map((p) => p.provide as string),
-      ],
-    };
-  }
-
-  private static createMulterStorageProvider(
-    namespace: string,
-    options: MulterStorageOptionsByDriver<FileStorageDriver>,
-  ): FactoryProvider<StorageEngine> {
-    return {
-      inject: [
-        getFileStorageOptionsToken(namespace),
-        { token: getFileStorageClientToken(namespace), optional: true },
-      ],
-      provide: getFileStorageMulterToken(namespace),
-      useFactory: (
-        { driver }: FileStorageOptions,
-        client?: FileStorageClientByDriver<FileStorageDriver>,
-      ) =>
-        createMulterStorage(
-          driver,
-          options,
-          ...((client
-            ? [client]
-            : []) as MulterStorageDepArg<FileStorageDriver>),
-        ),
+      imports,
+      exports: [FileStorageCoreModule, MulterModule],
     };
   }
 }

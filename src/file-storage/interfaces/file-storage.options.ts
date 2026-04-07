@@ -1,6 +1,8 @@
 import { Type } from '@nestjs/common';
+import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import type { S3StorageOptions } from '../storages/s3/s3-storage.options';
 import { DiskStorageOptions } from '../storages/disk';
+import type { MulterStorageOptionsByDriver } from '../factories/multer-storage.factory';
 
 export type FileStorageBaseOptions<
   D extends FileStorageDriver,
@@ -29,4 +31,9 @@ export interface FileStorageAsyncOptions {
   useClass: Type<FileStorageOptionsFactory>;
   // TODO
   // add other properties of ConfigurableModuleBuilder
+}
+
+export interface FileStorageMulterOptions {
+  limits?: MulterOptions['limits'];
+  storage: MulterStorageOptionsByDriver<FileStorageDriver>;
 }
