@@ -15,6 +15,7 @@ import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/m
 import {
   createMulterStorage,
   MulterStorageDepArg,
+  MulterStorageOptionsByDriver,
 } from './factories/multer-storage.factory';
 import { FileStorageClientByDriver } from './factories/file-storage-client.factory';
 
@@ -27,15 +28,25 @@ export class FileStorageModule {
     };
   }
 
-  static forFeature(
+  static forFeature(namespace?: string): DynamicModule;
+  static forFeature<D extends FileStorageDriver>(
+    namespace: string,
+    // I can't enforce multerOptions typing strictness
+    // without passing driver explicitly
+    // maybe it's possible, idk
+    driver: D,
+    multerOptions: FileStorageMulterOptions<D>,
+  ): DynamicModule;
+  static forFeature<D extends FileStorageDriver>(
     namespace: string = 'default',
-    multerOptions?: FileStorageMulterOptions,
+    driver?: D,
+    multerOptions?: FileStorageMulterOptions<D>,
   ): DynamicModule {
     const imports: DynamicModule[] = [
       FileStorageCoreModule.forFeature(namespace),
     ];
 
-    if (multerOptions) {
+    if (driver && multerOptions) {
       imports.push(
         MulterModule.registerAsync({
           imports: [FileStorageCoreModule.forFeature(namespace)],
@@ -44,18 +55,26 @@ export class FileStorageModule {
             { token: getFileStorageClientToken(namespace), optional: true },
           ],
           useFactory: (
-            { driver }: FileStorageOptions,
+            options: FileStorageOptions,
             client?: FileStorageClientByDriver<FileStorageDriver>,
-          ): MulterOptions => ({
-            storage: createMulterStorage(
-              driver,
-              multerOptions.storage,
-              ...((client
-                ? [client]
-                : []) as MulterStorageDepArg<FileStorageDriver>),
-            ),
-            limits: multerOptions.limits,
-          }),
+          ): MulterOptions => {
+            if (options.driver !== driver) {
+              throw new Error(
+                `File storage namespace "${namespace}" uses driver "${options.driver}", but multer was configured for "${driver}"`,
+              );
+            }
+
+            return {
+              storage: createMulterStorage(
+                options.driver,
+                multerOptions.storage as MulterStorageOptionsByDriver<FileStorageDriver>,
+                ...((client
+                  ? [client]
+                  : []) as MulterStorageDepArg<FileStorageDriver>),
+              ),
+              limits: multerOptions.limits,
+            };
+          },
         }),
       );
     }

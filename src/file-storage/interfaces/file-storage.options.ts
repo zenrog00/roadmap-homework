@@ -33,7 +33,9 @@ export interface FileStorageAsyncOptions {
   // add other properties of ConfigurableModuleBuilder
 }
 
-export interface FileStorageMulterOptions {
+export interface FileStorageMulterOptions<
+  D extends FileStorageDriver = FileStorageDriver,
+> {
   limits?: MulterOptions['limits'];
-  storage: MulterStorageOptionsByDriver<FileStorageDriver>;
+  storage: MulterStorageOptionsByDriver<D>;
 }
