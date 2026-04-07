@@ -5,6 +5,7 @@ import { FileStorageModule } from 'src/file-storage';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
 import { v7 as uuidv7 } from 'uuid';
+import { AuthRequest } from 'src/auth/utils/types';
 
 @Module({
   imports: [
@@ -14,7 +15,11 @@ import { v7 as uuidv7 } from 'uuid';
         limits: { fileSize: 10 * 1024 * 1024 },
         storage: {
           bucket: config.get('MINIO_USERS_AVATARS_BUCKET', { infer: true }),
-          filename: uuidv7(),
+          filename: (req: AuthRequest, file, cb) => {
+            const filename = `${req.user.id}/${uuidv7()}`;
+            cb(null, filename);
+          },
+          filetypes: ['image/png', 'image/jpeg', 'image/jpg'],
         },
       }),
     }),

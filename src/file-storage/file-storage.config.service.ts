@@ -24,6 +24,7 @@ export class FilesStorageConfigService implements FileStorageOptionsFactory {
         client: {
           endpoint,
           region: 'ru-central1',
+          forcePathStyle: true,
           credentials: {
             accessKeyId: this.configService.get('MINIO_ROOT_USER', {
               infer: true,
