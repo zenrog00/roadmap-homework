@@ -19,6 +19,7 @@ export class FilesStorageConfigService implements FileStorageOptionsFactory {
 
     return [
       {
+        namespace: 'users-avatars',
         driver: 's3',
         client: {
           endpoint,
