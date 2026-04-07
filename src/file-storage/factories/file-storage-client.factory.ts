@@ -15,7 +15,9 @@ export type FileStorageClientByDriver<D extends FileStorageDriver> =
   FileStorageClientByDriverMap[D];
 
 export type FileStorageClientOptionsByDriver<D extends FileStorageDriver> =
-  FileStorageOptionsByDriver<D>['client'];
+  'client' extends keyof FileStorageOptionsByDriver<D>
+    ? FileStorageOptionsByDriver<D>['client']
+    : never;
 
 type FileStorageClientCreatorByDriver = {
   [D in FileStorageDriver]: (

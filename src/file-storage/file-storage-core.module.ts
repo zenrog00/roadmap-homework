@@ -135,7 +135,7 @@ export class FileStorageCoreModule {
       inject: [getFileStorageOptionsToken(namespace)],
       provide: getFileStorageClientToken(namespace),
       useFactory: (options: FileStorageOptions) => {
-        if (options.client) {
+        if ('client' in options && options.client) {
           return createFileStorageClient(options.driver, options.client);
         }
       },
