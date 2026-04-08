@@ -84,7 +84,6 @@ export class UsersController {
     summary: 'Soft deletes current user',
   })
   @ApiBearerAuth()
-  @Put('my')
   @ApiOkResponse({
     description: 'Current user was soft deleted',
   })
