@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AvatarsController } from './avatars.controller';
 import { AvatarsService } from './avatars.service';
 import { FileStorageModule } from 'src/file-storage';
@@ -9,6 +9,7 @@ import { AuthRequest } from 'src/auth/utils/types';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Avatar, UserAvatar } from './entities';
 import { AvatarsRepository, UserAvatarsRepository } from './repositories';
+import { UsersModule } from '../users.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AvatarsRepository, UserAvatarsRepository } from './repositories';
         },
       }),
     }),
+    forwardRef(() => UsersModule),
   ],
   controllers: [AvatarsController],
   providers: [AvatarsService, AvatarsRepository, UserAvatarsRepository],

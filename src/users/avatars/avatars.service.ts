@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import {
   FileStorageService,
   InjectFileStorageService,
@@ -7,14 +7,18 @@ import {
 import { AvatarsRepository } from './repositories';
 import { UsersAvatarsRepository } from './repositories/users-avatars.repository';
 import { Transactional } from 'typeorm-transactional';
+import { UsersService } from '../users.service';
 
 @Injectable()
 export class AvatarsService {
+  private readonly AVATAR_COUNT_LIMIT = 5;
+
   constructor(
     @InjectFileStorageService('users-avatars')
     fileStorageService: FileStorageService,
     private readonly avatarsRepository: AvatarsRepository,
     private readonly usersAvatarsRepository: UsersAvatarsRepository,
+    private readonly usersService: UsersService,
   ) {}
 
   @Transactional()
@@ -23,6 +27,17 @@ export class AvatarsService {
     { key, size, mimetype }: UploadedFileDto,
   ) {
     const avatarId = key.split('/').at(-1);
+
+    // preventing race condition when
+    // user uploads avatar concurrently
+    await this.usersService.lockUserForUpdate(userId);
+    const userAvatarsCount =
+      await this.usersAvatarsRepository.countUserAvatars(userId);
+    if (userAvatarsCount >= this.AVATAR_COUNT_LIMIT) {
+      throw new ForbiddenException(
+        `You can't have more than ${this.AVATAR_COUNT_LIMIT} avatars!`,
+      );
+    }
 
     await this.avatarsRepository.save({
       id: avatarId,
@@ -36,12 +51,3 @@ export class AvatarsService {
     });
   }
 }
-
-// {
-//   fieldname: 'file',
-//   originalname: 'doll1.png',
-//   encoding: '7bit',
-//   mimetype: 'image/png',
-//   bucket: 'users-avatars',
-//   key: '019d67be-5fc5-704d-8752-fe30e049ced6/019d6d14-35fe-7648-93bc-750d981b0a75'
-// }

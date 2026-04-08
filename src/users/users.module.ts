@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities';
@@ -10,7 +10,7 @@ import { RouterModule } from '@nestjs/core';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
-    AvatarsModule,
+    forwardRef(() => AvatarsModule),
     RouterModule.register([
       {
         path: 'users',
