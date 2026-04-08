@@ -4,6 +4,7 @@ const uploadedFileProperties = [
   'originalname',
   'encoding',
   'mimetype',
+  'size',
   'key',
 ] as const;
 

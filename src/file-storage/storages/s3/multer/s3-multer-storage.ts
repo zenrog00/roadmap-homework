@@ -3,8 +3,8 @@ import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Request } from 'express';
 import { MulterStorageTemplate } from '../../multer-utils/multer-storage-template';
-import { validateFiletypeFromStream } from '../../../../common/utils/filetype-validator';
-
+import { validateFiletypeFromStream } from 'src/common/utils/filetype-validator';
+import { attachFileSizeCounter } from 'src/common/utils/file-size-counter';
 import { StorageFileInfo } from '../../multer-utils';
 import { S3MulterStorageOptions } from './s3-multer-storage.options';
 
@@ -23,9 +23,10 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
       const filename = await this.resolveOption('filename', req, file);
       const filetypes = await this.resolveOption('filetypes', req, file);
 
-      const { uploadStream } = await validateFiletypeFromStream(
-        file.stream,
-        filetypes,
+      const { uploadStream: validatedUploadStream } =
+        await validateFiletypeFromStream(file.stream, filetypes);
+      const { uploadStream, sizePromise } = attachFileSizeCounter(
+        validatedUploadStream,
       );
 
       const upload = new Upload({
@@ -39,8 +40,10 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
       });
 
       await upload.done();
+      const size = await sizePromise;
 
       const info: StorageFileInfo = {
+        size,
         key: `${bucket}/${filename}`,
       };
 
