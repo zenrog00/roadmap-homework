@@ -1,10 +1,9 @@
-import { Readable, Transform } from 'node:stream';
+import { Readable } from 'node:stream';
 import { UnsupportedMediaTypeException } from '@nestjs/common';
 import { fileTypeFromStream } from 'file-type';
 
 export interface FiletypeValidatorResult {
   uploadStream: Readable;
-  getSize: () => number;
   filetype?: string;
 }
 
@@ -34,23 +33,8 @@ export async function validateFiletypeFromStream(
     filetype = fileType.mime;
   }
 
-  let size = 0;
-  const uploadStream = Readable.fromWeb(rawUploadStream);
-  const sizeCountStream = new Transform({
-    transform(chunk, _encoding, cb) {
-      size += Buffer.isBuffer(chunk)
-        ? chunk.length
-        : Buffer.byteLength(String(chunk));
-      cb(null, chunk);
-    },
-  });
-
   return {
-    uploadStream: uploadStream.pipe(sizeCountStream),
+    uploadStream: Readable.fromWeb(rawUploadStream),
     filetype,
-    // returning closure function
-    // because upload stream needs to be consumed
-    // by storage first
-    getSize: () => size,
   };
 }
