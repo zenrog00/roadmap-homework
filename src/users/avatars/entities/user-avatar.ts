@@ -2,7 +2,7 @@ import { User } from 'src/users/entities';
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Avatar } from './avatar.entity';
 
-@Entity({ name: 'user_avatars' })
+@Entity({ name: 'users_avatars' })
 export class UserAvatar {
   @PrimaryColumn('uuid')
   user_id: string;
