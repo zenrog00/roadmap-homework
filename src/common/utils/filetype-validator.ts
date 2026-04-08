@@ -1,9 +1,10 @@
-import { Readable } from 'node:stream';
+import { Readable, Transform } from 'node:stream';
 import { UnsupportedMediaTypeException } from '@nestjs/common';
 import { fileTypeFromStream } from 'file-type';
 
 export interface FiletypeValidatorResult {
   uploadStream: Readable;
+  getSize: () => number;
   filetype?: string;
 }
 
@@ -11,28 +12,45 @@ export async function validateFiletypeFromStream(
   stream: Readable,
   filetypes?: readonly string[],
 ): Promise<FiletypeValidatorResult> {
-  if (!filetypes?.length) {
-    return { uploadStream: stream };
-  }
-
   const webStream = Readable.toWeb(stream);
-  const [typeDetectionStream, uploadStream] = webStream.tee();
+  const [typeDetectionStream, rawUploadStream] = filetypes?.length
+    ? webStream.tee()
+    : [undefined, webStream];
 
-  const fileType = await fileTypeFromStream(typeDetectionStream);
+  let filetype: string | undefined;
+  if (typeDetectionStream && filetypes?.length) {
+    const fileType = await fileTypeFromStream(typeDetectionStream);
 
-  if (!fileType) {
-    throw new UnsupportedMediaTypeException(
-      `Could not detect file type from file signature`,
-    );
+    if (!fileType) {
+      throw new UnsupportedMediaTypeException(
+        `Could not detect file type from file signature`,
+      );
+    }
+    if (!filetypes.includes(fileType.mime)) {
+      throw new UnsupportedMediaTypeException(
+        `File type ${fileType.ext || ''} not allowed`,
+      );
+    }
+    filetype = fileType.mime;
   }
-  if (!filetypes.includes(fileType.mime)) {
-    throw new UnsupportedMediaTypeException(
-      `File type ${fileType?.ext || ''} not allowed`,
-    );
-  }
+
+  let size = 0;
+  const uploadStream = Readable.fromWeb(rawUploadStream);
+  const sizeCountStream = new Transform({
+    transform(chunk, _encoding, cb) {
+      size += Buffer.isBuffer(chunk)
+        ? chunk.length
+        : Buffer.byteLength(String(chunk));
+      cb(null, chunk);
+    },
+  });
 
   return {
-    uploadStream: Readable.fromWeb(uploadStream),
-    filetype: fileType.mime,
+    uploadStream: uploadStream.pipe(sizeCountStream),
+    filetype,
+    // returning closure function
+    // because upload stream needs to be consumed
+    // by storage first
+    getSize: () => size,
   };
 }
