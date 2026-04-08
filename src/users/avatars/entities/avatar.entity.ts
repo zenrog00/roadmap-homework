@@ -9,7 +9,7 @@ import {
 @Entity({ name: 'avatars' })
 export class Avatar {
   @PrimaryColumn('uuid')
-  id: string;
+  key: string;
 
   @Column()
   size: string;
