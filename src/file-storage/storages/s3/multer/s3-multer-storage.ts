@@ -5,7 +5,7 @@ import { Request } from 'express';
 import { MulterStorageTemplate } from '../../multer-utils/multer-storage-template';
 import { validateFiletypeFromStream } from '../../../../common/utils/filetype-validator';
 
-import type { S3StorageFileInfo } from './s3-multer-storage.types';
+import { StorageFileInfo } from '../../multer-utils';
 import { S3MulterStorageOptions } from './s3-multer-storage.options';
 
 class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
@@ -40,9 +40,8 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
 
       await upload.done();
 
-      const info: S3StorageFileInfo = {
-        bucket,
-        key: filename,
+      const info: StorageFileInfo = {
+        key: `${bucket}/${filename}`,
       };
 
       console.log('Uploaded file to S3');
@@ -57,17 +56,21 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
   ): void {
     console.log('Removing file from S3');
     (async () => {
-      const s3File = file as Express.Multer.File & Partial<S3StorageFileInfo>;
+      const { key } = file as StorageFileInfo;
 
-      if (!s3File.bucket || !s3File.key) {
+      const firstSlashIdx = key.indexOf('/');
+      const bucket = firstSlashIdx === -1 ? '' : key.slice(0, firstSlashIdx);
+      const fileKey = firstSlashIdx === -1 ? '' : key.slice(firstSlashIdx + 1);
+
+      if (!bucket || !fileKey) {
         cb(null);
         return;
       }
 
       await this.options.s3Client.send(
         new DeleteObjectCommand({
-          Bucket: s3File.bucket,
-          Key: s3File.key,
+          Bucket: bucket,
+          Key: fileKey,
         }),
       );
 
