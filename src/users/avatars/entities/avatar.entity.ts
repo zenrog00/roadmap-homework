@@ -6,7 +6,7 @@ import {
   PrimaryColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'avatars' })
 export class Avatar {
   @PrimaryColumn('uuid')
   id: string;
