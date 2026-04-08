@@ -9,10 +9,10 @@ import {
 @Entity({ name: 'avatars' })
 export class Avatar {
   @PrimaryColumn('uuid')
-  key: string;
+  id: string;
 
-  @Column()
-  size: string;
+  @Column('bigint')
+  size: number;
 
   @Column()
   mimetype: string;

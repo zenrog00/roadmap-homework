@@ -14,9 +14,14 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { FileUploadDto } from 'src/common/dtos';
+import type { UploadedFileDto } from 'src/file-storage';
+import { AvatarsService } from './avatars.service';
+import { User } from 'src/common/decorators';
 
-@Controller('avatars')
+@Controller('avatars/my')
 export class AvatarsController {
+  constructor(private readonly avatarsService: AvatarsService) {}
+
   @Post()
   @ApiOperation({
     summary: `Upload current user's avatar`,
@@ -33,10 +38,11 @@ export class AvatarsController {
     description: `Current user's avatar was uploaded`,
   })
   @UseInterceptors(FileInterceptor('file'))
-  uploadAvatar(
+  async uploadAvatar(
+    @User('id') userId: string,
     @UploadedFile(new ParseFilePipe())
-    file: Express.Multer.File,
+    fileData: UploadedFileDto,
   ) {
-    console.log(file);
+    return await this.avatarsService.saveAvatarData(userId, fileData);
   }
 }

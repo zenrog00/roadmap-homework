@@ -6,9 +6,13 @@ import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
 import { v7 as uuidv7 } from 'uuid';
 import { AuthRequest } from 'src/auth/utils/types';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Avatar, UserAvatar } from './entities';
+import { AvatarsRepository, UserAvatarsRepository } from './repositories';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Avatar, UserAvatar]),
     FileStorageModule.forFeature('users-avatars', 's3', {
       inject: [ConfigService],
       useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
@@ -25,6 +29,6 @@ import { AuthRequest } from 'src/auth/utils/types';
     }),
   ],
   controllers: [AvatarsController],
-  providers: [AvatarsService],
+  providers: [AvatarsService, AvatarsRepository, UserAvatarsRepository],
 })
 export class AvatarsModule {}

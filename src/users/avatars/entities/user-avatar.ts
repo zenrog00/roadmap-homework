@@ -5,7 +5,7 @@ import { Avatar } from './avatar.entity';
 @Entity({ name: 'users_avatars' })
 export class UserAvatar {
   @PrimaryColumn('uuid')
-  user_id: string;
+  userId: string;
 
   @ManyToOne(() => User, {
     onDelete: 'CASCADE',
