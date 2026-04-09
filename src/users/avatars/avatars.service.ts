@@ -29,7 +29,7 @@ export class AvatarsService {
     const avatarId = key.split('/').at(-1);
 
     // preventing race condition when
-    // user uploads avatar concurrently
+    // user uploads avatars concurrently
     await this.usersService.lockUserForUpdate(userId);
     const userAvatarsCount =
       await this.usersAvatarsRepository.countUserAvatars(userId);
@@ -49,5 +49,7 @@ export class AvatarsService {
       userId,
       avatarId,
     });
+
+    return avatarId;
   }
 }

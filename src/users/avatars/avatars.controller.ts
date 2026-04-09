@@ -26,9 +26,9 @@ export class AvatarsController {
   @ApiOperation({
     summary: `Upload current user's avatar`,
   })
-  @ApiConsumes('mutipart/form-data')
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: `Current user's avatar. 
+    description: `Current user's avatar 
     Max size of 10mb is allowed.
     Allowed mimetypes: image.png, image.jpeg, image.jpg`,
     type: FileUploadDto,
@@ -36,6 +36,11 @@ export class AvatarsController {
   @ApiBearerAuth()
   @ApiCreatedResponse({
     description: `Current user's avatar was uploaded`,
+    schema: {
+      description: 'UUID of uploaded avatar',
+      type: 'string',
+      format: 'uuid',
+    },
   })
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(
