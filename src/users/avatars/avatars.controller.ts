@@ -2,6 +2,7 @@ import {
   Controller,
   ParseFilePipe,
   Post,
+  Get,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -11,12 +12,14 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import { FileUploadDto } from 'src/common/dtos';
 import type { UploadedFileDto } from 'src/file-storage';
 import { AvatarsService } from './avatars.service';
 import { User } from 'src/common/decorators';
+import { AvatarsListResponseDto } from './dtos';
 
 @Controller('avatars/my')
 export class AvatarsController {
@@ -43,11 +46,27 @@ export class AvatarsController {
     },
   })
   @UseInterceptors(FileInterceptor('file'))
-  async uploadAvatar(
+  async uploadMyAvatar(
     @User('id') userId: string,
     @UploadedFile(new ParseFilePipe())
     fileData: UploadedFileDto,
   ) {
     return await this.avatarsService.saveAvatarData(userId, fileData);
+  }
+
+  @Get()
+  @ApiOperation({
+    description: `Get current user avatars info`,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    type: AvatarsListResponseDto,
+    isArray: true,
+    description: 'Curent user avatars info',
+  })
+  async getMyAvatarsList(
+    @User('id') userId: string,
+  ): Promise<AvatarsListResponseDto[]> {
+    return await this.avatarsService.getMyAvatarsList(userId);
   }
 }

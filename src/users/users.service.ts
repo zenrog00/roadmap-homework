@@ -48,10 +48,10 @@ export class UsersService {
     return await this.usersRepository.findOneBy(opts);
   }
 
-  async findAll(getUsetsQueryDto: GetUsersQueryDto) {
-    const users = await this.usersRepository.findAll(getUsetsQueryDto);
+  async findAll(getUsersQueryDto: GetUsersQueryDto) {
+    const users = await this.usersRepository.findAll(getUsersQueryDto);
 
-    const { cursor, limit, isPrevious } = getUsetsQueryDto;
+    const { cursor, limit, isPrevious } = getUsersQueryDto;
 
     const hasMore = users.length > limit;
     if (hasMore) {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { UserAvatar } from '../entities';
+import { AvatarsListResponseDto } from '../dtos';
 
 @Injectable()
 export class UsersAvatarsRepository extends Repository<UserAvatar> {
@@ -9,8 +10,18 @@ export class UsersAvatarsRepository extends Repository<UserAvatar> {
   }
 
   async countUserAvatars(userId: string) {
-    return await this.createQueryBuilder('users_avatars')
-      .where('users_avatars.userId = :userId', { userId })
+    return await this.createQueryBuilder('ua')
+      .where('ua.userId = :userId', { userId })
       .getCount();
+  }
+
+  async findAll(userId: string): Promise<AvatarsListResponseDto[]> {
+    return await this.createQueryBuilder('ua')
+      .innerJoin('ua.avatar', 'a')
+      .select('ua.avatarId', 'id')
+      .addSelect('a.createdAt', 'createdAt')
+      .where('ua.userId = :userId', { userId })
+      .orderBy('a.createdAt')
+      .getRawMany();
   }
 }

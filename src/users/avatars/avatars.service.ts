@@ -52,4 +52,8 @@ export class AvatarsService {
 
     return avatarId;
   }
+
+  async getMyAvatarsList(userId: string) {
+    return this.usersAvatarsRepository.findAll(userId);
+  }
 }
