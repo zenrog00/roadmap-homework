@@ -5,8 +5,11 @@ import type { S3Client } from '@aws-sdk/client-s3';
 export type S3StorageCtorArgs = ConstructorParameters<typeof S3StorageService>;
 
 export class S3StorageService extends FileStorageService {
-  constructor(private readonly client: S3Client) {
-    super();
+  constructor(
+    namespace: string,
+    private readonly client: S3Client,
+  ) {
+    super(namespace);
   }
 
   getFile(): Promise<Readable> | Readable {

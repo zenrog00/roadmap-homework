@@ -2,8 +2,8 @@ import { FileStorageService } from 'src/file-storage/file-storage.service';
 import { Readable } from 'node:stream';
 
 export class DiskStorageService extends FileStorageService {
-  constructor() {
-    super();
+  constructor(namespace: string) {
+    super(namespace);
   }
 
   getFile(): Promise<Readable> | Readable {

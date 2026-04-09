@@ -19,7 +19,9 @@ export class FilesStorageConfigService implements FileStorageOptionsFactory {
 
     return [
       {
-        namespace: 'users-avatars',
+        namespace: this.configService.get('MINIO_USERS_AVATARS_BUCKET', {
+          infer: true,
+        }),
         driver: 's3',
         client: {
           endpoint,

@@ -24,7 +24,7 @@ import {
 import { FileStorageService } from './file-storage.service';
 import {
   createFileStorageService,
-  FileStorageClientArg,
+  FileStorageServiceCtorArg,
 } from './factories/file-storage-service.factory';
 
 @Module({})
@@ -158,8 +158,8 @@ export class FileStorageCoreModule {
         return createFileStorageService(
           options.driver,
           ...((client
-            ? [client]
-            : []) as FileStorageClientArg<FileStorageDriver>),
+            ? [namespace, client]
+            : [namespace]) as FileStorageServiceCtorArg<FileStorageDriver>),
         );
       },
     };

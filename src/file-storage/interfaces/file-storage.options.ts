@@ -9,12 +9,33 @@ import type { S3StorageOptions } from '../storages/s3/s3-storage.options';
 import { DiskStorageOptions } from '../storages/disk';
 import type { MulterStorageOptionsByDriver } from '../factories/multer-storage.factory';
 
+/**
+ * - `namespace` is a logical storage area (defaults to `default` when omitted).
+ * - If `C` is provided, `client` becomes required.
+ */
+export interface FileStorageBaseFields<D extends FileStorageDriver> {
+  /**
+   * Logical storage path.
+   *
+   * When omitted, the namespace resolves to default.
+   * Driver implementations decide how this maps to physical storage.
+   * - S3/MinIO storages should set namespace to bucket name.
+   */
+  namespace?: string;
+  driver: D;
+}
+
+/**
+ * Base storage options per namespace.
+ *
+ * If `C` is provided, `client` becomes required.
+ */
 export type FileStorageBaseOptions<
   D extends FileStorageDriver,
   C = undefined,
 > = C extends undefined
-  ? { namespace?: string; driver: D }
-  : { namespace?: string; driver: D; client: C };
+  ? FileStorageBaseFields<D>
+  : FileStorageBaseFields<D> & { client: C };
 
 export type FileStorageOptions = S3StorageOptions | DiskStorageOptions;
 
