@@ -5,6 +5,8 @@ import {
   Get,
   UploadedFile,
   UseInterceptors,
+  Param,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -40,9 +42,9 @@ export class AvatarsController {
   @ApiCreatedResponse({
     description: `Current user's avatar was uploaded`,
     schema: {
-      description: 'UUID of uploaded avatar',
       type: 'string',
       format: 'uuid',
+      description: 'UUID of uploaded avatar',
     },
   })
   @UseInterceptors(FileInterceptor('file'))
@@ -56,17 +58,38 @@ export class AvatarsController {
 
   @Get()
   @ApiOperation({
-    description: `Get current user avatars info`,
+    description: `Get current user's avatars info`,
   })
   @ApiBearerAuth()
   @ApiOkResponse({
     type: AvatarsListResponseDto,
     isArray: true,
-    description: 'Curent user avatars info',
+    description: `Curent user's avatars info`,
   })
   async getMyAvatarsList(
     @User('id') userId: string,
   ): Promise<AvatarsListResponseDto[]> {
     return await this.avatarsService.getMyAvatarsList(userId);
+  }
+
+  @ApiOperation({
+    description: `Get current user's avatar download url`,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    description: `Current user's avatar download url was generated`,
+    schema: {
+      type: 'string',
+      format: 'uri',
+      example: 'https://minio.example/bucket/key?X-Amz-...',
+      description: `Current user's avatar download url`,
+    },
+  })
+  @Get(':avatarId/download-link')
+  async getMyAvatarDownloadUrl(
+    @User('id') userId: string,
+    @Param('avatarId', ParseUUIDPipe) avatarId: string,
+  ) {
+    return await this.avatarsService.getMyAvatarDownloadUrl(userId, avatarId);
   }
 }

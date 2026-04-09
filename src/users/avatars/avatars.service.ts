@@ -15,7 +15,7 @@ export class AvatarsService {
 
   constructor(
     @InjectFileStorageService('users-avatars')
-    fileStorageService: FileStorageService,
+    private readonly fileStorageService: FileStorageService,
     private readonly avatarsRepository: AvatarsRepository,
     private readonly usersAvatarsRepository: UsersAvatarsRepository,
     private readonly usersService: UsersService,
@@ -55,5 +55,11 @@ export class AvatarsService {
 
   async getMyAvatarsList(userId: string) {
     return this.usersAvatarsRepository.findAll(userId);
+  }
+
+  async getMyAvatarDownloadUrl(userId: string, avatarId: string) {
+    const avatarKey = `${userId}/${avatarId}`;
+
+    return await this.fileStorageService.getFileDownloadUrl(avatarKey);
   }
 }
