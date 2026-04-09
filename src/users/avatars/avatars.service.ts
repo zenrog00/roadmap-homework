@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   FileStorageService,
   InjectFileStorageService,
@@ -58,6 +62,15 @@ export class AvatarsService {
   }
 
   async getMyAvatarDownloadUrl(userId: string, avatarId: string) {
+    // checking that avatar was not soft deleted
+    const userAvatarCount = await this.usersAvatarsRepository.countUserAvatars(
+      userId,
+      avatarId,
+    );
+    if (userAvatarCount < 1) {
+      throw new NotFoundException('Avatar was not found!');
+    }
+
     const avatarKey = `${userId}/${avatarId}`;
 
     return await this.fileStorageService.getFileDownloadUrl(avatarKey);

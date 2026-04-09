@@ -9,10 +9,17 @@ export class UsersAvatarsRepository extends Repository<UserAvatar> {
     super(UserAvatar, dataSource.createEntityManager());
   }
 
-  async countUserAvatars(userId: string) {
-    return await this.createQueryBuilder('ua')
+  async countUserAvatars(userId: string, avatarId?: string) {
+    const queryBuilder = this.createQueryBuilder('ua')
+      .innerJoin('ua.avatar', 'a')
       .where('ua.userId = :userId', { userId })
-      .getCount();
+      .andWhere('a.deletedAt IS NULL');
+
+    if (avatarId) {
+      queryBuilder.andWhere('ua.avatarId = :avatarId', { avatarId });
+    }
+
+    return await queryBuilder.getCount();
   }
 
   async findAll(userId: string): Promise<AvatarsListResponseDto[]> {
@@ -21,6 +28,7 @@ export class UsersAvatarsRepository extends Repository<UserAvatar> {
       .select('ua.avatarId', 'id')
       .addSelect('a.createdAt', 'createdAt')
       .where('ua.userId = :userId', { userId })
+      .andWhere('a.deletedAt IS NULL')
       .orderBy('a.createdAt')
       .getRawMany();
   }
