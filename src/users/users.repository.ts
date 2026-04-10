@@ -39,6 +39,15 @@ export class UsersRepository extends Repository<User> {
       .getOne();
   }
 
+  async softDeleteUser(userId: string) {
+    await this.createQueryBuilder()
+      .softDelete()
+      .from(User)
+      .where('userId = :userId', { userId })
+      .andWhere('deletedAt IS NULL')
+      .execute();
+  }
+
   async deleteSoftDeletedUsers(to: string) {
     await this.createQueryBuilder()
       .delete()
