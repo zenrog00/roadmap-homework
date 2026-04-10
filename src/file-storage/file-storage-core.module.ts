@@ -110,12 +110,30 @@ export class FileStorageCoreModule {
       seen.add(namespace);
     });
 
+    const optionsByNamespace = new Map(
+      options.map((o) => [o.namespace ?? 'default', o]),
+    );
+
     options.forEach((storageOptions) => {
       if ('useClientFrom' in storageOptions) {
+        const ns = storageOptions.namespace ?? 'default';
         const ref = storageOptions.useClientFrom;
+
         if (!seen.has(ref)) {
           throw new Error(
-            `File storage namespace "${storageOptions.namespace ?? 'default'}" references client from "${ref}", which does not exist`,
+            `File storage namespace "${ns}" references client from "${ref}", which does not exist`,
+          );
+        }
+
+        const source = optionsByNamespace.get(ref)!;
+        if ('useClientFrom' in source) {
+          throw new Error(
+            `File storage namespace "${ns}" references client from "${ref}", but "${ref}" does not define its own client`,
+          );
+        }
+        if (storageOptions.driver !== source.driver) {
+          throw new Error(
+            `File storage namespace "${ns}" uses driver "${storageOptions.driver}" but references client from "${ref}" which uses driver "${source.driver}"`,
           );
         }
       }
@@ -167,11 +185,6 @@ export class FileStorageCoreModule {
               );
 
         if (!sourceOptions || !('client' in sourceOptions)) {
-          if ('useClientFrom' in options) {
-            throw new Error(
-              `Namespace "${namespace}" references client from "${sourceNamespace}", but no client config was found`,
-            );
-          }
           return undefined;
         }
 
