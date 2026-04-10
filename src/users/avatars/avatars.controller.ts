@@ -7,6 +7,7 @@ import {
   UseInterceptors,
   Param,
   ParseUUIDPipe,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -58,7 +59,7 @@ export class AvatarsController {
 
   @Get()
   @ApiOperation({
-    description: `Get current user's avatars info`,
+    summary: `Get current user's avatars info`,
   })
   @ApiBearerAuth()
   @ApiOkResponse({
@@ -73,7 +74,7 @@ export class AvatarsController {
   }
 
   @ApiOperation({
-    description: `Get current user's avatar download url`,
+    summary: `Get current user's avatar download url`,
   })
   @ApiBearerAuth()
   @ApiOkResponse({
@@ -91,5 +92,20 @@ export class AvatarsController {
     @Param('avatarId', ParseUUIDPipe) avatarId: string,
   ) {
     return await this.avatarsService.getMyAvatarDownloadUrl(userId, avatarId);
+  }
+
+  @Delete(':avatarId')
+  @ApiOperation({
+    summary: `Soft deletes current user's avatar`,
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    description: `Current user's avatar was soft deleted`,
+  })
+  async deleteMyUser(
+    @User('id') userId: string,
+    @Param('avatarId', ParseUUIDPipe) avatarId: string,
+  ) {
+    await this.avatarsService.deleteMyAvatar(userId, avatarId);
   }
 }

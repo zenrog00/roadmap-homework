@@ -75,4 +75,8 @@ export class AvatarsService {
 
     return await this.fileStorageService.getFileDownloadUrl(avatarKey);
   }
+
+  async deleteMyAvatar(userId: string, avatarId: string) {
+    await this.avatarsRepository.softDeleteUserAvatar(userId, avatarId);
+  }
 }
