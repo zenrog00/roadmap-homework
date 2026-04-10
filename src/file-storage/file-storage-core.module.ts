@@ -30,6 +30,10 @@ import {
 @Module({})
 export class FileStorageCoreModule {
   private static readonly featureModules = new Map<string, DynamicModule>();
+  private static readonly clientInstances = new Map<
+    string,
+    FileStorageClientByDriver<FileStorageDriver>
+  >();
 
   static forRootAsync(options: FileStorageAsyncOptions): DynamicModule {
     const providers = this.createAsyncOptionsProvider(options);
@@ -105,6 +109,17 @@ export class FileStorageCoreModule {
       }
       seen.add(namespace);
     });
+
+    options.forEach((storageOptions) => {
+      if ('useClientFrom' in storageOptions) {
+        const ref = storageOptions.useClientFrom;
+        if (!seen.has(ref)) {
+          throw new Error(
+            `File storage namespace "${storageOptions.namespace ?? 'default'}" references client from "${ref}", which does not exist`,
+          );
+        }
+      }
+    });
   }
 
   private static createFileStorageOptionsProvider(
@@ -132,12 +147,40 @@ export class FileStorageCoreModule {
     namespace: string,
   ): FactoryProvider<FileStorageClientByDriver<FileStorageDriver> | undefined> {
     return {
-      inject: [getFileStorageOptionsToken(namespace)],
+      inject: [FILE_STORAGE_OPTIONS, getFileStorageOptionsToken(namespace)],
       provide: getFileStorageClientToken(namespace),
-      useFactory: (options: FileStorageOptions) => {
-        if ('client' in options && options.client) {
-          return createFileStorageClient(options.driver, options.client);
+      useFactory: (
+        allOptions: FileStorageModuleOptions,
+        options: FileStorageOptions,
+      ) => {
+        const sourceNamespace =
+          'useClientFrom' in options ? options.useClientFrom : namespace;
+
+        const cached = this.clientInstances.get(sourceNamespace);
+        if (cached) return cached;
+
+        const sourceOptions =
+          sourceNamespace === namespace
+            ? options
+            : allOptions.find(
+                (o) => (o.namespace ?? 'default') === sourceNamespace,
+              );
+
+        if (!sourceOptions || !('client' in sourceOptions)) {
+          if ('useClientFrom' in options) {
+            throw new Error(
+              `Namespace "${namespace}" references client from "${sourceNamespace}", but no client config was found`,
+            );
+          }
+          return undefined;
         }
+
+        const client = createFileStorageClient(
+          sourceOptions.driver,
+          sourceOptions.client,
+        );
+        this.clientInstances.set(sourceNamespace, client);
+        return client;
       },
     };
   }

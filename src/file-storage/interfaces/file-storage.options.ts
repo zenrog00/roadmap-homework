@@ -28,14 +28,16 @@ export interface FileStorageBaseFields<D extends FileStorageDriver> {
 /**
  * Base storage options per namespace.
  *
- * If `C` is provided, `client` becomes required.
+ * If `C` is provided, the namespace must supply either a `client`
+ * config (to create its own client) or `useClientFrom` (to reuse
+ * the client created by another namespace).
  */
 export type FileStorageBaseOptions<
   D extends FileStorageDriver,
   C = undefined,
 > = C extends undefined
   ? FileStorageBaseFields<D>
-  : FileStorageBaseFields<D> & { client: C };
+  : FileStorageBaseFields<D> & ({ client: C } | { useClientFrom: string });
 
 export type FileStorageOptions = S3StorageOptions | DiskStorageOptions;
 
