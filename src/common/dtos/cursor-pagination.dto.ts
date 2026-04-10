@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class CursorPaginationDto {
+export class CursorPaginationQueryDto {
   @ApiPropertyOptional({
     description: 'Cursor for getting next or previous page',
   })
@@ -33,4 +33,19 @@ export class CursorPaginationDto {
   @IsOptional()
   @Transform(({ value }) => value === 'true')
   isPrevious?: boolean;
+}
+
+export class CursorPaginationResponseDto {
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'id of last returned item if next page exists',
+  })
+  nextCursor?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description: 'id of first returned item is previous page exists',
+  })
+  prevCursor?: string;
 }

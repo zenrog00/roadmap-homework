@@ -64,6 +64,9 @@ export class UsersController {
     };
   }
 
+  // @Get('most-active')
+  // async getMostActiveUsers()
+
   @ApiOperation({
     summary: 'Updates current user data',
   })
