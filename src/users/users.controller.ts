@@ -67,6 +67,15 @@ export class UsersController {
   }
 
   @Get('most-active')
+  @ApiOperation({
+    summary:
+      'Get cursor paginated most active users data with optional ageFrom and ageTo filters',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    type: GetMostActiveUsersResponseDto,
+    description: 'Cursor paginated most active users data',
+  })
   async getMostActiveUsers(
     @Query(new ValidationPipe({ transform: true }))
     query: GetMostActiveUsersQueryDto,

@@ -86,7 +86,7 @@ export class AvatarsController {
       description: `Current user's avatar download url`,
     },
   })
-  @Get(':avatarId/download-link')
+  @Get(':avatarId/download-url')
   async getMyAvatarDownloadUrl(
     @User('id') userId: string,
     @Param('avatarId', ParseUUIDPipe) avatarId: string,

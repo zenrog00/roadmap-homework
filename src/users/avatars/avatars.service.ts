@@ -67,6 +67,7 @@ export class AvatarsService {
       userId,
       avatarId,
     );
+    console.log(userAvatarCount);
     if (userAvatarCount < 1) {
       throw new NotFoundException('Avatar was not found!');
     }
