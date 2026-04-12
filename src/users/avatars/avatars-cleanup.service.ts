@@ -63,18 +63,18 @@ export class AvatarsCleanupService {
             `Failed to delete avatar ${avatarId} from database\n${message}`,
           );
         }
+      }
 
-        // Prevent infinite loop if every item in batch failed
-        if (candidates.length === this.batchSize && deletedInBatch === 0) {
-          this.logger.warn(
-            'Stopping avatars hard delete job because full batch failed to be deleted',
-          );
-          break;
-        }
+      // Prevent infinite loop if every item in full batch failed.
+      if (candidates.length === this.batchSize && deletedInBatch === 0) {
+        this.logger.warn(
+          'Stopping avatars hard delete job because full batch failed to be deleted',
+        );
+        break;
+      }
 
-        if (candidates.length < this.batchSize) {
-          break;
-        }
+      if (candidates.length < this.batchSize) {
+        break;
       }
 
       this.logger.log(`Avatars hard delete job finished
