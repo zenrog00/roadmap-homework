@@ -52,7 +52,7 @@ export class AvatarsCleanupService {
         }
 
         try {
-          await this.avatarsRepository.deleteSoftDeletedAvatars(this.untilDays);
+          await this.avatarsRepository.delete({ id: avatarId });
           ++databaseDeleted;
           ++deletedInBatch;
         } catch (err) {
