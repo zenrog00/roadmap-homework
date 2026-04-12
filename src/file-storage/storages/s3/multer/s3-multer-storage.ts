@@ -3,8 +3,8 @@ import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { Request } from 'express';
 import { MulterStorageTemplate } from '../../multer-utils/multer-storage-template';
-import { validateFiletypeFromStream } from 'src/common/utils/filetype-validator';
-import { attachFileSizeCounter } from 'src/common/utils/file-size-counter';
+import { validateFiletypeFromStream } from 'src/common/utils/files';
+import { attachFileSizeCounter } from 'src/common/utils/files';
 import { StorageFileInfo } from '../../multer-utils';
 import { S3MulterStorageOptions } from './s3-multer-storage.options';
 
