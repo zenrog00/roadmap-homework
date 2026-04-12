@@ -3,6 +3,7 @@ import { Readable } from 'node:stream';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   type S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -24,6 +25,33 @@ export class S3StorageService extends FileStorageService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getFile(key: string): Promise<Readable> | Readable {
     throw new Error(`${this.constructor.name}: Method not implemented`);
+  }
+
+  async getFileList(path: string) {
+    let continuationToken: string | undefined;
+    const keys: string[] = [];
+
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: `${path}/`,
+        ContinuationToken: continuationToken,
+        MaxKeys: 1000,
+      });
+
+      const res = await this.client.send(command);
+      for (const { Key } of res.Contents ?? []) {
+        if (Key) {
+          keys.push(Key);
+        }
+      }
+
+      continuationToken = res.IsTruncated
+        ? res.NextContinuationToken
+        : undefined;
+    } while (continuationToken);
+
+    return keys;
   }
 
   async getFileDownloadUrl(key: string): Promise<string> {
