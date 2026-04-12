@@ -7,6 +7,7 @@ import { createHash } from 'src/common/utils/hash';
 import { Cron } from '@nestjs/schedule';
 import { UsersRepository } from './users.repository';
 import { isDatabaseError } from 'src/database/database-error';
+import { buildCursorPaginationResult } from 'src/common/utils/cursor-pagination/cursor-pagination';
 
 @Injectable()
 export class UsersService {
@@ -50,31 +51,13 @@ export class UsersService {
 
   async findAll(getUsersQueryDto: GetUsersQueryDto) {
     const users = await this.usersRepository.findAll(getUsersQueryDto);
-
     const { cursor, limit, isPrevious } = getUsersQueryDto;
-
-    const hasMore = users.length > limit;
-    if (hasMore) {
-      users.pop();
-    }
-
-    const data = isPrevious ? users.reverse() : users;
-
-    let nextCursor: string | undefined;
-    let prevCursor: string | undefined;
-    if (isPrevious) {
-      prevCursor = hasMore ? data[0]?.id : undefined;
-      nextCursor = data.at(-1)?.id;
-    } else {
-      nextCursor = hasMore ? data.at(-1)?.id : undefined;
-      prevCursor = cursor && data.at(0)?.id;
-    }
-
-    return {
-      data,
-      nextCursor,
-      prevCursor,
-    };
+    return buildCursorPaginationResult(users, {
+      limit,
+      cursor,
+      isPrevious,
+      getCursor: (user) => user.id,
+    });
   }
 
   async lockUserForUpdate(userId: string) {

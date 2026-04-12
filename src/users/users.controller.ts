@@ -11,6 +11,7 @@ import {
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
 import {
+  //GetMostActiveUsersQueryDto,
   GetUsersQueryDto,
   GetUsersResponseDto,
   UserDto,
@@ -65,7 +66,10 @@ export class UsersController {
   }
 
   // @Get('most-active')
-  // async getMostActiveUsers()
+  // getMostActiveUsers(
+  //   @Query(new ValidationPipe({ transform: true }))
+  //   query: GetMostActiveUsersQueryDto,
+  // ) {}
 
   @ApiOperation({
     summary: 'Updates current user data',
