@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Avatar, UserAvatar } from './entities';
 import { AvatarsRepository, UserAvatarsRepository } from './repositories';
 import { UsersModule } from '../users.module';
+import { AvatarsCleanupService } from './avatars-cleanup.service';
 
 @Module({
   imports: [
@@ -31,6 +32,11 @@ import { UsersModule } from '../users.module';
     forwardRef(() => UsersModule),
   ],
   controllers: [AvatarsController],
-  providers: [AvatarsService, AvatarsRepository, UserAvatarsRepository],
+  providers: [
+    AvatarsService,
+    AvatarsCleanupService,
+    AvatarsRepository,
+    UserAvatarsRepository,
+  ],
 })
 export class AvatarsModule {}

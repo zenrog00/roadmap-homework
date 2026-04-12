@@ -45,4 +45,14 @@ export class AvatarsRepository extends Repository<Avatar> {
       .limit(batchSize)
       .getRawMany<SoftDeletedAvatarRow>();
   }
+
+  async deleteSoftDeletedAvatars(untilDays: number) {
+    await this.createQueryBuilder()
+      .delete()
+      .where('"deletedAt" is not null')
+      .andWhere(`a."deletedAt" <= NOW() - (:untilDays * INTERVAL '1 day')`, {
+        untilDays,
+      })
+      .execute();
+  }
 }
