@@ -43,7 +43,7 @@ export class UsersRepository extends Repository<User> {
     await this.createQueryBuilder()
       .softDelete()
       .from(User)
-      .where('userId = :userId', { userId })
+      .where('id = :userId', { userId })
       .andWhere('deletedAt IS NULL')
       .execute();
   }
