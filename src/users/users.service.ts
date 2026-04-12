@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { GetUsersQueryDto, UserDto } from './dtos';
+import { GetMostActiveUsersQueryDto, GetUsersQueryDto, UserDto } from './dtos';
 import { User } from './entities';
 import { FindOptionsWhere } from 'typeorm';
 import { PostgresErrorCode } from 'src/database/postgres-error-code';
@@ -51,8 +51,23 @@ export class UsersService {
 
   async findAll(getUsersQueryDto: GetUsersQueryDto) {
     const users = await this.usersRepository.findAll(getUsersQueryDto);
+
     const { cursor, limit, isPrevious } = getUsersQueryDto;
     return buildCursorPaginationResult(users, {
+      limit,
+      cursor,
+      isPrevious,
+      getCursor: (user) => user.id,
+    });
+  }
+
+  async findMostActive(getMostActiveUsersQueryDto: GetMostActiveUsersQueryDto) {
+    const mostActiveUsers = await this.usersRepository.findMostActive(
+      getMostActiveUsersQueryDto,
+    );
+
+    const { cursor, limit, isPrevious } = getMostActiveUsersQueryDto;
+    return buildCursorPaginationResult(mostActiveUsers, {
       limit,
       cursor,
       isPrevious,

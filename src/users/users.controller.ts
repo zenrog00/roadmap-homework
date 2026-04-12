@@ -11,13 +11,14 @@ import {
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
 import {
-  //GetMostActiveUsersQueryDto,
+  GetMostActiveUsersQueryDto,
   GetUsersQueryDto,
   GetUsersResponseDto,
   UserDto,
   UserResponseDto,
 } from './dtos';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { GetMostActiveUsersResponseDto } from './dtos/get-most-active-users-response.dto';
 
 @Controller('users')
 export class UsersController {
@@ -65,11 +66,13 @@ export class UsersController {
     };
   }
 
-  // @Get('most-active')
-  // getMostActiveUsers(
-  //   @Query(new ValidationPipe({ transform: true }))
-  //   query: GetMostActiveUsersQueryDto,
-  // ) {}
+  @Get('most-active')
+  async getMostActiveUsers(
+    @Query(new ValidationPipe({ transform: true }))
+    query: GetMostActiveUsersQueryDto,
+  ): Promise<GetMostActiveUsersResponseDto> {
+    return await this.usersService.findMostActive(query);
+  }
 
   @ApiOperation({
     summary: 'Updates current user data',
