@@ -37,15 +37,12 @@ export class CursorPaginationQueryDto {
 
 export class CursorPaginationResponseDto {
   @ApiPropertyOptional({
-    format: 'uuid',
     description: 'id of last returned item if next page exists',
   })
   nextCursor?: string;
 
   @ApiPropertyOptional({
-    type: String,
-    format: 'uuid',
-    description: 'id of first returned item is previous page exists',
+    description: 'id of first returned item if previous page exists',
   })
   prevCursor?: string;
 }
