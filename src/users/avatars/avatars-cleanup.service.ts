@@ -16,7 +16,7 @@ export class AvatarsCleanupService {
   ) {}
 
   // every day at midnight Moscow
-  @Cron('0 0 * * *')
+  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
   private async deleteSoftDeletedAvatars() {
     let totalProcessed = 0;
     let storageDeleted = 0;
