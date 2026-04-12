@@ -1,6 +1,10 @@
 import { FileStorageService } from 'src/file-storage/file-storage.service';
 import { Readable } from 'node:stream';
-import { GetObjectCommand, type S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  type S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export type S3StorageCtorArgs = ConstructorParameters<typeof S3StorageService>;
@@ -35,8 +39,12 @@ export class S3StorageService extends FileStorageService {
     return url;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  removeFile(key: string) {
-    throw new Error(`${this.constructor.name}: Method not implemented`);
+  async removeFile(key: string) {
+    //throw new Error(`${this.constructor.name}: Method not implemented`);
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+    return await this.client.send(command);
   }
 }
