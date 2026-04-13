@@ -123,6 +123,16 @@ export class UsersRepository extends Repository<User> {
       .execute();
   }
 
+  async findUserIdsBatch(limit: number, cursor?: string) {
+    const qb = this.createQueryBuilder('user').select('user.id');
+
+    if (cursor) {
+      qb.where('user.id > :afterCursor', { cursor });
+    }
+
+    return await qb.orderBy('user.id', 'ASC').limit(limit).getMany();
+  }
+
   async deleteSoftDeletedUsers(to: string) {
     await this.createQueryBuilder()
       .delete()

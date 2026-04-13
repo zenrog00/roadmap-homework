@@ -13,8 +13,8 @@ import { buildCursorPaginationResult } from 'src/common/utils/cursor-pagination/
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  // every day at midnight Moscow
-  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
+  // every day at 01:00 Moscow
+  @Cron('0 1 * * *', { timeZone: 'Europe/Moscow' })
   private async deleteSoftDeletedUsers() {
     const oneWeekAgo = "now() - interval '7 days'";
     await this.usersRepository.deleteSoftDeletedUsers(oneWeekAgo);
@@ -73,6 +73,10 @@ export class UsersService {
       isPrevious,
       getCursor: (user) => user.id,
     });
+  }
+
+  async findUserIdsBatch(limit: number, cursor?: string) {
+    return this.usersRepository.findUserIdsBatch(limit, cursor);
   }
 
   async lockUserForUpdate(userId: string) {
