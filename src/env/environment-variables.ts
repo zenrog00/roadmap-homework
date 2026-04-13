@@ -57,4 +57,16 @@ export class EnvironmentVariables {
 
   @IsNotEmpty()
   MINIO_USERS_AVATARS_BUCKET: string;
+
+  @IsNotEmpty()
+  @IsUrl({ require_tld: false })
+  REDIS_HOST: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(65535)
+  REDIS_PORT: number;
+
+  @IsNotEmpty()
+  REDIS_PASSWORD: string;
 }
