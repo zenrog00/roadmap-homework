@@ -27,22 +27,22 @@ export class S3StorageService extends FileStorageService {
     throw new Error(`${this.constructor.name}: Method not implemented`);
   }
 
-  async getFileList(path: string) {
+  async getFileList(prefix?: string) {
     let continuationToken: string | undefined;
-    const keys: string[] = [];
+    const files: { key: string; lastModified?: Date }[] = [];
 
     do {
       const command = new ListObjectsV2Command({
         Bucket: this.bucket,
-        Prefix: `${path}/`,
+        Prefix: prefix ? `${prefix}/` : undefined,
         ContinuationToken: continuationToken,
         MaxKeys: 1000,
       });
 
       const res = await this.client.send(command);
-      for (const { Key } of res.Contents ?? []) {
+      for (const { Key, LastModified } of res.Contents ?? []) {
         if (Key) {
-          keys.push(Key);
+          files.push({ key: Key, lastModified: LastModified });
         }
       }
 
@@ -51,7 +51,7 @@ export class S3StorageService extends FileStorageService {
         : undefined;
     } while (continuationToken);
 
-    return keys;
+    return files;
   }
 
   async getFileDownloadUrl(key: string): Promise<string> {
