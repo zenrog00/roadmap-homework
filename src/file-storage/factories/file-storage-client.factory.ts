@@ -6,7 +6,6 @@ import {
 
 type FileStorageClientByDriverMap = {
   s3: S3Client;
-  disk: never;
 };
 
 export type FileStorageClientByDriver<D extends FileStorageDriver> =
@@ -29,9 +28,6 @@ type FileStorageClientCreatorByDriver = {
 
 const FILE_STORAGE_CLIENT_CREATORS: FileStorageClientCreatorByDriver = {
   s3: (options) => new S3Client(options),
-  disk: () => {
-    throw new Error('Disk storage does not require a client');
-  },
 };
 
 export function createFileStorageClient<D extends FileStorageDriver>(

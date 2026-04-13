@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import type { S3StorageOptions } from '../storages/s3/s3-storage.options';
-import { DiskStorageOptions } from '../storages/disk';
 import type { MulterStorageOptionsByDriver } from '../factories/multer-storage.factory';
 
 /**
@@ -39,12 +38,12 @@ export type FileStorageBaseOptions<
   ? FileStorageBaseFields<D>
   : FileStorageBaseFields<D> & ({ client: C } | { useClientFrom: string });
 
-export type FileStorageOptions = S3StorageOptions | DiskStorageOptions;
+export type FileStorageOptions = S3StorageOptions;
 
 // type is array for possible storage extensions
 export type FileStorageModuleOptions = FileStorageOptions[];
 
-export type FileStorageDriver = 's3' | 'disk';
+export type FileStorageDriver = 's3';
 
 export type FileStorageOptionsByDriver<D extends FileStorageDriver> = Extract<
   FileStorageOptions,

@@ -6,7 +6,6 @@ import type { FileStorageClientByDriver } from './file-storage-client.factory';
 
 type MulterStorageOptionsByDriverMap = {
   s3: Omit<S3MulterStorageOptions, 's3Client'>;
-  disk: never;
 };
 
 export type MulterStorageOptionsByDriver<D extends FileStorageDriver> =
@@ -14,7 +13,6 @@ export type MulterStorageOptionsByDriver<D extends FileStorageDriver> =
 
 type MulterStorageDepByDriverMap = {
   s3: FileStorageClientByDriver<'s3'>;
-  disk: never;
 };
 
 type MulterStorageDepByDriver<D extends FileStorageDriver> =
@@ -34,9 +32,6 @@ type MulterStorageCreatorByDriver = {
 
 const MULTER_STORAGE_CREATORS: MulterStorageCreatorByDriver = {
   s3: (options, s3Client) => s3Storage({ ...options, s3Client }),
-  disk: () => {
-    throw new Error('Disk multer storage is not implemented');
-  },
 };
 
 export function createMulterStorage<D extends FileStorageDriver>(

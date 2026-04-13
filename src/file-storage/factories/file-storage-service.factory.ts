@@ -1,7 +1,6 @@
 import { FileStorageDriver } from '../interfaces/file-storage.options';
 import { FileStorageService } from '../file-storage.service';
 import { S3StorageService } from '../storages/s3/s3-storage.service';
-import { DiskStorageService } from '../storages/disk/disk-storage-service';
 import { FileStorageClientByDriver } from './file-storage-client.factory';
 
 type FileStorageServiceCtorArgByDriver = {
@@ -20,7 +19,6 @@ type FileStorageServiceCreatorByDriver = {
 
 const FILE_STORAGE_SERVICE_CREATORS: FileStorageServiceCreatorByDriver = {
   s3: (namespace, client) => new S3StorageService(namespace, client),
-  disk: (namespace) => new DiskStorageService(namespace), // placeholder for now
 };
 
 export function createFileStorageService<D extends FileStorageDriver>(
