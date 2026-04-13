@@ -45,4 +45,16 @@ export class AvatarsRepository extends Repository<Avatar> {
       .limit(batchSize)
       .getRawMany<SoftDeletedAvatarRow>();
   }
+
+  async existsActiveAvatar(userId: string, avatarId: string) {
+    const count = await this.createQueryBuilder()
+      .from('users_avatars', 'ua')
+      .innerJoin('avatars', 'a', 'ua."avatarId" = a.id')
+      .where('ua."userId" = :userId', { userId })
+      .andWhere('ua."avatarId" = :avatarId', { avatarId })
+      .andWhere('a."deletedAt" IS NULL')
+      .getCount();
+
+    return count > 0;
+  }
 }
