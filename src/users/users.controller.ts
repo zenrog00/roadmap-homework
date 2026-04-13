@@ -42,6 +42,7 @@ export class UsersController {
     if (!user) {
       throw new NotFoundException("User's data not found!");
     }
+
     const { password, ...userData } = user;
     return userData;
   }

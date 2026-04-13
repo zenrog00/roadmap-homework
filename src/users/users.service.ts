@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { GetMostActiveUsersQueryDto, GetUsersQueryDto, UserDto } from './dtos';
 import { User } from './entities';
 import { FindOptionsWhere } from 'typeorm';
@@ -8,10 +13,18 @@ import { Cron } from '@nestjs/schedule';
 import { UsersRepository } from './users.repository';
 import { isDatabaseError } from 'src/database/database-error';
 import { buildCursorPaginationResult } from 'src/common/utils/cursor-pagination/cursor-pagination';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  private readonly logger = new Logger(UsersService.name);
+  private readonly cachePrefix = 'users';
+  private readonly cacheTtl = 30 * 1000; // 30 seconds
+
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   // every day at 01:00 Moscow
   @Cron('0 1 * * *', { timeZone: 'Europe/Moscow' })
@@ -30,6 +43,9 @@ export class UsersService {
         password: hashedPassword,
       });
       const { id } = await this.usersRepository.save(user);
+
+      await this.saveUserToCache(user);
+
       return id;
     } catch (err) {
       if (
@@ -46,7 +62,17 @@ export class UsersService {
   }
 
   async findOneBy(opts: FindOptionsWhere<User>) {
-    return await this.usersRepository.findOneBy(opts);
+    const cache = await this.getUserFromCache(opts);
+    if (cache) {
+      return cache;
+    }
+
+    const user = await this.usersRepository.findOneBy(opts);
+    if (user) {
+      await this.saveUserToCache(user);
+    }
+
+    return user;
   }
 
   async findAll(getUsersQueryDto: GetUsersQueryDto) {
@@ -87,11 +113,13 @@ export class UsersService {
     try {
       const { password } = userDto;
       const hashedPassword = await createHash(password);
-      await this.usersRepository.save({
+      const savedUser = await this.usersRepository.save({
         ...userDto,
         id: userId,
         password: hashedPassword,
       });
+
+      await this.saveUserToCache(savedUser);
     } catch (err) {
       if (
         isDatabaseError(err) &&
@@ -110,5 +138,37 @@ export class UsersService {
 
   async deleteUser(userId: string) {
     await this.usersRepository.softDeleteUser(userId);
+    await this.invalidateUserCache(userId);
+  }
+
+  private async getUserFromCache(
+    user: string | FindOptionsWhere<User>,
+  ): Promise<User | undefined> {
+    let userId: string;
+
+    if (typeof user === 'string') {
+      userId = user;
+    } else if ('id' in user && typeof user.id === 'string') {
+      userId = user.id;
+    } else {
+      return;
+    }
+
+    const key = this.buildUserCacheKey(userId);
+    return await this.cacheManager.get(key);
+  }
+
+  private async saveUserToCache(user: User) {
+    const key = this.buildUserCacheKey(user.id);
+    await this.cacheManager.set(key, user, this.cacheTtl);
+  }
+
+  private async invalidateUserCache(userId: string) {
+    const key = this.buildUserCacheKey(userId);
+    await this.cacheManager.del(key);
+  }
+
+  private buildUserCacheKey(userId: string) {
+    return `${this.cachePrefix}/${userId}`;
   }
 }
