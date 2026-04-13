@@ -155,17 +155,45 @@ export class UsersService {
     }
 
     const key = this.buildUserCacheKey(userId);
-    return await this.cacheManager.get(key);
+
+    try {
+      const value = await this.cacheManager.get<User>(key);
+
+      if (value) {
+        this.logger.log(`Cache hit on user ${key}`);
+      } else {
+        this.logger.log(`Cache miss on user ${key}`);
+      }
+
+      return value;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Error while getting cache of user ${key} \n${message}`);
+    }
   }
 
   private async saveUserToCache(user: User) {
     const key = this.buildUserCacheKey(user.id);
-    await this.cacheManager.set(key, user, this.cacheTtl);
+
+    try {
+      await this.cacheManager.set(key, user, this.cacheTtl);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Error while saving cache of user ${key} \n${message}`);
+    }
   }
 
   private async invalidateUserCache(userId: string) {
     const key = this.buildUserCacheKey(userId);
-    await this.cacheManager.del(key);
+
+    try {
+      await this.cacheManager.del(key);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Error while invalidating cache of user ${key} \n${message}`,
+      );
+    }
   }
 
   private buildUserCacheKey(userId: string) {
