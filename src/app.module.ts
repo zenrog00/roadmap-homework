@@ -9,6 +9,8 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { FilesStorageConfigService, FileStorageModule } from './file-storage';
+import { CacheModule } from '@nestjs/cache-manager';
+import { CacheConfigService } from './cache';
 
 @Module({
   imports: [
@@ -26,6 +28,10 @@ import { FilesStorageConfigService, FileStorageModule } from './file-storage';
     UsersModule,
     FileStorageModule.forRootAsync({
       useClass: FilesStorageConfigService,
+    }),
+    CacheModule.registerAsync({
+      useClass: CacheConfigService,
+      isGlobal: true,
     }),
   ],
 })
