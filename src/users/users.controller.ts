@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Put,
   Query,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -19,6 +20,7 @@ import {
 } from './dtos';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { GetMostActiveUsersResponseDto } from './dtos/get-most-active-users-response.dto';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @Controller('users')
 export class UsersController {
@@ -45,6 +47,8 @@ export class UsersController {
   }
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30 * 1000) // 30 seconds
   @ApiOperation({
     summary: 'Get cursor paginated users data with optional username filter',
   })
