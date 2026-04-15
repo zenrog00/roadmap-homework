@@ -33,4 +33,13 @@ export class BalanceRepository {
     const returned = res.raw as BalanceResponseDto[];
     return returned[0];
   }
+
+  async getBalance(userId: string) {
+    return await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.balance', 'balance')
+      .where('user.id = :userId', { userId })
+      .andWhere('user.deletedAt IS NULL')
+      .getRawOne<BalanceResponseDto>();
+  }
 }

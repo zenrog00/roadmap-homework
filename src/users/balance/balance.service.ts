@@ -37,4 +37,12 @@ export class BalanceService {
 
     return res;
   }
+
+  async getBalance(userId: string) {
+    const balance = await this.balanceRepository.getBalance(userId);
+    if (!balance) {
+      throw new NotFoundException("User's not found!");
+    }
+    return balance;
+  }
 }

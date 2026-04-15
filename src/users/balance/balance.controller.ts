@@ -1,4 +1,4 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, ValidationPipe } from '@nestjs/common';
 import { User } from 'src/common/decorators';
 import { BalanceOperationDto } from './dtos/balance-operation.dto';
 import { BalanceService } from './balance.service';
@@ -21,5 +21,10 @@ export class BalanceController {
     @Body(ValidationPipe) { amount }: BalanceOperationDto,
   ) {
     return await this.balanceService.createWithdrawal(userId, amount);
+  }
+
+  @Get()
+  async getBalance(@User('id') userId: string) {
+    return await this.balanceService.getBalance(userId);
   }
 }
