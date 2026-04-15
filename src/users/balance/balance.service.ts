@@ -18,6 +18,7 @@ export class BalanceService {
     if (!res) {
       throw new NotFoundException("User's not found!");
     }
+    return res;
   }
 
   async createWithdrawal(userId: string, amount: string) {
@@ -33,5 +34,7 @@ export class BalanceService {
       }
       throw new BadRequestException('Insufficient balance!');
     }
+
+    return res;
   }
 }

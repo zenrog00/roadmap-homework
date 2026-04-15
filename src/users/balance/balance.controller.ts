@@ -12,7 +12,7 @@ export class BalanceController {
     @User('id') userId: string,
     @Body(ValidationPipe) { amount }: BalanceOperationDto,
   ) {
-    await this.balanceService.createDeposit(userId, amount);
+    return await this.balanceService.createDeposit(userId, amount);
   }
 
   @Post('withdrawals')
@@ -20,6 +20,6 @@ export class BalanceController {
     @User('id') userId: string,
     @Body(ValidationPipe) { amount }: BalanceOperationDto,
   ) {
-    await this.balanceService.createWithdrawal(userId, amount);
+    return await this.balanceService.createWithdrawal(userId, amount);
   }
 }

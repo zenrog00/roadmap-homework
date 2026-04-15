@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities';
 import { UsersRepository } from '../users.repository';
+import { BalanceResponseDto } from './dtos';
 
 @Injectable()
 export class BalanceRepository {
@@ -24,7 +25,12 @@ export class BalanceRepository {
       });
     }
 
-    const res = await query.setParameters({ delta }).execute();
-    return Boolean(res.affected);
+    const res = await query
+      .setParameters({ delta })
+      .returning(['balance'])
+      .execute();
+
+    const returned = res.raw as BalanceResponseDto[];
+    return returned[0];
   }
 }
