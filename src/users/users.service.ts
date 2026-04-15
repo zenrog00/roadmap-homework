@@ -7,11 +7,11 @@ import {
 import { GetMostActiveUsersQueryDto, GetUsersQueryDto, UserDto } from './dtos';
 import { User } from './entities';
 import { FindOptionsWhere } from 'typeorm';
-import { PostgresErrorCode } from 'src/database/postgres-error-code';
+import { PostgresErrorCode } from 'src/database/utils/postgres-error-code';
 import { createHash } from 'src/common/utils/hash';
 import { Cron } from '@nestjs/schedule';
 import { UsersRepository } from './users.repository';
-import { isDatabaseError } from 'src/database/database-error';
+import { isDatabaseError } from 'src/database/utils';
 import { buildCursorPaginationResult } from 'src/common/utils/cursor-pagination/cursor-pagination';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
