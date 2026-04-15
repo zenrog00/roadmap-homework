@@ -16,7 +16,7 @@ import {
   GetUsersQueryDto,
   GetUsersResponseDto,
   UserDto,
-  UserResponseDto,
+  UserMyResponseDto,
 } from './dtos';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { GetMostActiveUsersResponseDto } from './dtos/get-most-active-users-response.dto';
@@ -32,10 +32,10 @@ export class UsersController {
   })
   @ApiBearerAuth()
   @ApiOkResponse({
-    type: UserResponseDto,
+    type: UserMyResponseDto,
     description: 'Current user data',
   })
-  async getMyUser(@User('id') userId: string): Promise<UserResponseDto> {
+  async getMyUser(@User('id') userId: string): Promise<UserMyResponseDto> {
     const user = await this.usersService.findOneBy({
       id: userId,
     });
