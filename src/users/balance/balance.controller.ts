@@ -14,4 +14,12 @@ export class BalanceController {
   ) {
     await this.balanceService.createDeposit(userId, amount);
   }
+
+  @Post('withdrawals')
+  async createWithdrawal(
+    @User('id') userId: string,
+    @Body(ValidationPipe) { amount }: BalanceOperationDto,
+  ) {
+    await this.balanceService.createWithdrawal(userId, amount);
+  }
 }
