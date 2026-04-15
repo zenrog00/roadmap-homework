@@ -9,16 +9,22 @@ export class BalanceRepository {
     @InjectRepository(User) private readonly usersRepository: UsersRepository,
   ) {}
 
-  async createDeposit(userId: string, amount: string) {
-    const res = await this.usersRepository
+  async changeBalance(userId: string, delta: string) {
+    const query = this.usersRepository
       .createQueryBuilder()
       .update(User)
-      .set({ balance: () => `balance + :amount` })
+      .set({ balance: () => `balance + :delta` })
       .where('id = :userId', { userId })
-      .andWhere(`"deletedAt" IS NULL`)
-      .setParameters({ amount })
-      .execute();
+      .andWhere(`"deletedAt" IS NULL`);
 
+    // withdrawing balance
+    if (delta.startsWith('-')) {
+      query.andWhere('balance >= :amount', {
+        amount: delta.slice(1),
+      });
+    }
+
+    const res = await query.setParameters({ delta }).execute();
     return Boolean(res.affected);
   }
 }
