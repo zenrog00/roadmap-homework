@@ -73,13 +73,13 @@ export class AvatarsCleanupService {
       if (candidates.length < this.batchSize) {
         break;
       }
-
-      this.logger.log(`Avatars hard delete job finished
-        processed: ${totalProcessed}
-        deleted from storage: ${storageDeleted}
-        deleted from database: ${databaseDeleted}
-        errors: ${errorsCount}`);
     }
+
+    this.logger.log(`Avatars hard delete job finished
+      processed: ${totalProcessed}
+      deleted from storage: ${storageDeleted}
+      deleted from database: ${databaseDeleted}
+      errors: ${errorsCount}`);
   }
 
   // every sunday at 03:00 Moscow
