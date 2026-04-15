@@ -4,7 +4,7 @@ import { FindOptionsWhere, LessThan } from 'typeorm';
 import { RefreshSession } from './entities';
 import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
 import type { AuthModuleOptions } from './auth.module-options';
-import { UsersService } from 'src/users/users.service';
+import { UsersService } from 'src/users/';
 import { Transactional } from 'typeorm-transactional';
 import { Cron } from '@nestjs/schedule';
 import { RefreshSessionsRepository } from './refresh-sessions.repository';

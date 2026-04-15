@@ -22,7 +22,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { GetMostActiveUsersResponseDto } from './dtos/get-most-active-users-response.dto';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
-@Controller('users')
+@Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

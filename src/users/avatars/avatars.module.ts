@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AvatarsController } from './avatars.controller';
 import { AvatarsService } from './avatars.service';
 import { FileStorageModule } from 'src/file-storage';
@@ -29,7 +29,7 @@ import { AvatarsCleanupService } from './avatars-cleanup.service';
         },
       }),
     }),
-    forwardRef(() => UsersModule),
+    UsersModule,
   ],
   controllers: [AvatarsController],
   providers: [
