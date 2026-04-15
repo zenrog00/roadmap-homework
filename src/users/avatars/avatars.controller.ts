@@ -24,7 +24,7 @@ import { AvatarsService } from './avatars.service';
 import { User } from 'src/common/decorators';
 import { AvatarsListResponseDto } from './dtos';
 
-@Controller('avatars/my')
+@Controller('my/avatars')
 export class AvatarsController {
   constructor(private readonly avatarsService: AvatarsService) {}
 
