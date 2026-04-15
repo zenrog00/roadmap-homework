@@ -4,10 +4,11 @@ import { BalanceController } from './balance.controller';
 import { BalanceService } from './balance.service';
 import { User } from '../entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BalanceRepository } from './balance.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User]), UsersModule],
   controllers: [BalanceController],
-  providers: [BalanceService],
+  providers: [BalanceService, BalanceRepository],
 })
 export class BalanceModule {}

@@ -8,6 +8,7 @@ import { BalanceModule } from './balance';
   imports: [
     UsersModule,
     AvatarsModule,
+    BalanceModule,
     RouterModule.register([
       {
         path: 'users',
