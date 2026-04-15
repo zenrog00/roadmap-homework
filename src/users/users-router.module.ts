@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { UsersModule } from './users.module';
 import { AvatarsModule } from './avatars';
 import { RouterModule } from '@nestjs/core';
+import { BalanceModule } from './balance';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { RouterModule } from '@nestjs/core';
       {
         path: 'users',
         module: UsersModule,
-        children: [AvatarsModule],
+        children: [AvatarsModule, BalanceModule],
       },
     ]),
   ],
