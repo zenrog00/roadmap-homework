@@ -7,7 +7,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { IdempotencyKey, User } from 'src/common/decorators';
-import { BalanceOperationDto } from './dtos/balance-operation.dto';
+import { BalanceOperationDto, BalanceTransferDto } from './dtos';
 import { BalanceService } from './balance.service';
 
 @Controller('my/balance')
@@ -35,6 +35,21 @@ export class BalanceController {
   ) {
     return await this.balanceService.createWithdrawal(
       userId,
+      amount,
+      idempotencyKey,
+    );
+  }
+
+  @Post('transfers')
+  async createTransfer(
+    @User('id') userId: string,
+    @IdempotencyKey(new ParseUUIDPipe()) idempotencyKey: string,
+    @Body(ValidationPipe)
+    { counterpartyUserId, amount }: BalanceTransferDto,
+  ) {
+    return await this.balanceService.createTransfer(
+      userId,
+      counterpartyUserId,
       amount,
       idempotencyKey,
     );

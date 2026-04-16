@@ -26,9 +26,11 @@ export class BalanceService {
     userId: string,
     amount: string,
     idempotencyKey: string,
+    counterpartyUserId = userId,
   ): Promise<BalanceResponseDto> {
     const balance = await this.applyIdempotentBalanceOperation({
       userId,
+      counterpartyUserId,
       idempotencyKey,
       operationType: 'deposit',
       amount,
@@ -45,9 +47,11 @@ export class BalanceService {
     userId: string,
     amount: string,
     idempotencyKey: string,
+    counterpartyUserId = userId,
   ): Promise<BalanceResponseDto> {
     const balance = await this.applyIdempotentBalanceOperation({
       userId,
+      counterpartyUserId,
       idempotencyKey,
       operationType: 'withdrawal',
       amount,
@@ -63,6 +67,41 @@ export class BalanceService {
     return balance;
   }
 
+  @Transactional()
+  async createTransfer(
+    userId: string,
+    counterpartyUserId: string,
+    amount: string,
+    idempotencyKey: string,
+  ): Promise<BalanceResponseDto> {
+    if (userId === counterpartyUserId) {
+      throw new BadRequestException('Cannot transfer to yourself!');
+    }
+
+    const senderBalance = await this.createWithdrawal(
+      userId,
+      amount,
+      idempotencyKey,
+      counterpartyUserId,
+    );
+
+    try {
+      await this.createDeposit(
+        counterpartyUserId,
+        amount,
+        idempotencyKey,
+        userId,
+      );
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw new NotFoundException('Recipient user not found!');
+      }
+      throw err;
+    }
+
+    return senderBalance;
+  }
+
   async getBalance(userId: string): Promise<BalanceResponseDto> {
     const balance = await this.balanceRepository.getBalance(userId);
     if (!balance) {
@@ -73,6 +112,7 @@ export class BalanceService {
 
   private async applyIdempotentBalanceOperation({
     userId,
+    counterpartyUserId,
     idempotencyKey,
     operationType,
     amount,
@@ -97,7 +137,8 @@ export class BalanceService {
     if (existingOperation) {
       const hasSamePayload =
         existingOperation.operationType === operationType &&
-        this.normalizeAmount(existingOperation.amount) === normalizedAmount;
+        this.normalizeAmount(existingOperation.amount) === normalizedAmount &&
+        existingOperation.counterpartyUserId === counterpartyUserId;
       if (!hasSamePayload) {
         throw new ConflictException(
           'Idempotency key already used with different payload!',
@@ -117,6 +158,7 @@ export class BalanceService {
 
     await this.saveSuccessfulOperation({
       userId,
+      counterpartyUserId,
       idempotencyKey,
       operationType,
       amount: normalizedAmount,
