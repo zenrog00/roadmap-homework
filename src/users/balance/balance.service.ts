@@ -1,33 +1,58 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BalanceRepository } from './balance.repository';
+import {
+  ApplyIdempotentBalanceOperationInput,
+  SaveSuccessfulOperationInput,
+} from './types';
+import { BalanceRepository, BalanceOperationsRepository } from './repositories';
 import { UsersService } from '../users.service';
+import { Transactional } from 'typeorm-transactional';
+import { BalanceResponseDto } from './dtos';
 
 @Injectable()
 export class BalanceService {
   constructor(
     private readonly balanceRepository: BalanceRepository,
+    private readonly balanceOperationsRepository: BalanceOperationsRepository,
     private readonly usersService: UsersService,
   ) {}
 
-  async createDeposit(userId: string, amount: string) {
-    const res = await this.balanceRepository.changeBalance(userId, amount);
-    if (!res) {
+  @Transactional()
+  async createDeposit(
+    userId: string,
+    amount: string,
+    idempotencyKey: string,
+  ): Promise<BalanceResponseDto> {
+    const balance = await this.applyIdempotentBalanceOperation({
+      userId,
+      idempotencyKey,
+      operationType: 'deposit',
+      amount,
+    });
+    if (!balance) {
       throw new NotFoundException("User's not found!");
     }
-    return res;
+
+    return balance;
   }
 
-  async createWithdrawal(userId: string, amount: string) {
-    const operationSign = '-';
-    const delta = `${operationSign}${amount}`;
-
-    const res = await this.balanceRepository.changeBalance(userId, delta);
-
-    if (!res) {
+  @Transactional()
+  async createWithdrawal(
+    userId: string,
+    amount: string,
+    idempotencyKey: string,
+  ): Promise<BalanceResponseDto> {
+    const balance = await this.applyIdempotentBalanceOperation({
+      userId,
+      idempotencyKey,
+      operationType: 'withdrawal',
+      amount,
+    });
+    if (!balance) {
       const user = await this.usersService.findOneBy({ id: userId });
       if (!user) {
         throw new NotFoundException("User's not found!");
@@ -35,14 +60,84 @@ export class BalanceService {
       throw new BadRequestException('Insufficient balance!');
     }
 
-    return res;
+    return balance;
   }
 
-  async getBalance(userId: string) {
+  async getBalance(userId: string): Promise<BalanceResponseDto> {
     const balance = await this.balanceRepository.getBalance(userId);
     if (!balance) {
       throw new NotFoundException("User's not found!");
     }
     return balance;
+  }
+
+  private async applyIdempotentBalanceOperation({
+    userId,
+    idempotencyKey,
+    operationType,
+    amount,
+  }: ApplyIdempotentBalanceOperationInput): Promise<
+    BalanceResponseDto | undefined
+  > {
+    const normalizedAmount = this.normalizeAmount(amount);
+    const delta =
+      operationType === 'withdrawal'
+        ? `-${normalizedAmount}`
+        : normalizedAmount;
+
+    await this.balanceOperationsRepository.acquireIdempotencyLock(
+      userId,
+      idempotencyKey,
+    );
+
+    const existingOperation = await this.balanceOperationsRepository.findOneBy({
+      userId,
+      idempotencyKey,
+    });
+    if (existingOperation) {
+      const hasSamePayload =
+        existingOperation.operationType === operationType &&
+        this.normalizeAmount(existingOperation.amount) === normalizedAmount;
+      if (!hasSamePayload) {
+        throw new ConflictException(
+          'Idempotency key already used with different payload!',
+        );
+      }
+
+      return { balance: existingOperation.resultBalance };
+    }
+
+    const updatedBalance = await this.balanceRepository.changeBalance(
+      userId,
+      delta,
+    );
+    if (!updatedBalance) {
+      return;
+    }
+
+    await this.saveSuccessfulOperation({
+      userId,
+      idempotencyKey,
+      operationType,
+      amount: normalizedAmount,
+      resultBalance: updatedBalance.balance,
+    });
+
+    return updatedBalance;
+  }
+
+  private async saveSuccessfulOperation(
+    operation: SaveSuccessfulOperationInput,
+  ) {
+    await this.balanceOperationsRepository.save(operation);
+  }
+
+  // preventing cases when first amount is 12 and second is 12.00
+  private normalizeAmount(amount: string) {
+    const [integer, fraction = ''] = amount.split('.');
+    const normalizedInteger = BigInt(integer).toString();
+    const normalizedFraction = `${fraction}00`.slice(0, 2);
+
+    return `${normalizedInteger}.${normalizedFraction}`;
   }
 }
