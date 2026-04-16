@@ -12,7 +12,7 @@ import { User } from 'src/users/entities';
 import type { BalanceOperationType } from '../types';
 
 @Entity({ name: 'balance_operations' })
-@Check(`"operationType" in ('deposit', 'withdrawal')`)
+@Check(`"operationType" in ('deposit', 'withdrawal', 'transfer')`)
 @Check(`"amount" > 0`)
 export class BalanceOperation {
   @PrimaryColumn('uuid')
@@ -37,6 +37,16 @@ export class BalanceOperation {
     scale: 2,
   })
   amount: string;
+
+  @Column('uuid')
+  counterpartyUserId: string;
+
+  @ManyToOne(() => User, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  @JoinColumn({ name: 'counterpartyUserId' })
+  counterpartyUser: User;
 
   @Column({
     type: 'decimal',
