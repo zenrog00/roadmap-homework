@@ -42,9 +42,8 @@ export class BalanceOperation {
     type: 'decimal',
     precision: 12,
     scale: 2,
-    nullable: true,
   })
-  resultBalance: string | null;
+  resultBalance: string;
 
   @Index()
   @CreateDateColumn({ type: 'timestamp with time zone' })
