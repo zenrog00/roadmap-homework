@@ -78,6 +78,8 @@ export class BalanceService {
       throw new BadRequestException('Cannot transfer to yourself!');
     }
 
+    await this.lockTransferUsersForUpdate(userId, counterpartyUserId);
+
     const senderBalance = await this.createWithdrawal(
       userId,
       amount,
@@ -166,6 +168,22 @@ export class BalanceService {
     });
 
     return updatedBalance;
+  }
+
+  // locking both users in deterministic order.
+  // because without sorting, opposite transfers (A->B and B->A) can deadlock
+  // tx1 locks A when updating balance in transaction and waits for B
+  // while tx2 locks B and waits for A.
+  private async lockTransferUsersForUpdate(
+    senderUserId: string,
+    counterpartyUserId: string,
+  ) {
+    const [firstUserId, secondUserId] = [senderUserId, counterpartyUserId].sort(
+      (a, b) => a.localeCompare(b),
+    );
+
+    await this.usersService.lockUserForUpdate(firstUserId);
+    await this.usersService.lockUserForUpdate(secondUserId);
   }
 
   private async saveSuccessfulOperation(

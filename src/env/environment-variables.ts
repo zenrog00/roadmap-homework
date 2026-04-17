@@ -36,7 +36,7 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   JWT_SECRET: string;
 
-  ACCESS_TOKEN_EXPIRES_IN: StringValue = '15m';
+  ACCESS_TOKEN_EXPIRES_IN: StringValue = '300m';
   REFRESH_TOKEN_EXPIRES_IN: StringValue = '30d';
   MAX_USER_SESSIONS = 5;
 
