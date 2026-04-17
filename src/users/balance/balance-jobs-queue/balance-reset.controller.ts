@@ -9,4 +9,9 @@ export class BalanceResetController {
   async startBalanceResetJob() {
     await this.balanceResetService.startBalanceResetJob();
   }
+
+  @Post('stop')
+  async stopBalanceResetJob() {
+    await this.balanceResetService.stopBalanceResetJob();
+  }
 }
