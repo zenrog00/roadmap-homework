@@ -1,12 +1,12 @@
 import { Controller, Post } from '@nestjs/common';
-import { BalanceService } from '../balance.service';
+import { BalanceResetService } from './balance-reset.service';
 
 @Controller('balance/reset-job')
 export class BalanceResetController {
-  constructor(private readonly balanceService: BalanceService) {}
+  constructor(private readonly balanceResetService: BalanceResetService) {}
 
   @Post('start')
   async startBalanceResetJob() {
-    await this.balanceService.startBalanceResetJob();
+    await this.balanceResetService.startBalanceResetJob();
   }
 }
