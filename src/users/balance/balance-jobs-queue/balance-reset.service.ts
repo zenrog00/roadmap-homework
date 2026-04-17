@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -17,7 +18,7 @@ import {
 import { User } from 'src/users/entities';
 
 @Injectable()
-export class BalanceResetService {
+export class BalanceResetService implements OnModuleDestroy {
   private readonly logger = new Logger(BalanceResetService.name);
 
   constructor(
@@ -70,6 +71,13 @@ export class BalanceResetService {
       this.logger.warn(`${logMessage} \n${errMessage}`);
       throw new InternalServerErrorException(logMessage);
     }
+  }
+
+  async onModuleDestroy() {
+    this.logger.log(
+      `Stopping users' balances reset scheduler ${BALANCE_RESET_SCHEDULER_ID} on module destroy`,
+    );
+    await this.stopBalanceResetJob();
   }
 
   async resetAllUsersBalances() {
