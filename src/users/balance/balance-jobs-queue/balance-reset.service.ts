@@ -5,18 +5,24 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { BalanceRepository } from '../repositories';
+import { UsersService } from 'src/users';
 import {
+  BALANCE_RESET_BATCH_SIZE,
   BALANCE_JOBS_QUEUE_NAME,
   BALANCE_RESET_JOB_INTERVAL_MS,
   BALANCE_RESET_JOB_NAME,
   BALANCE_RESET_SCHEDULER_ID,
 } from './balance-jobs-queue.constants';
+import { User } from 'src/users/entities';
 
 @Injectable()
 export class BalanceResetService {
   private readonly logger = new Logger(BalanceResetService.name);
 
   constructor(
+    private readonly balanceRepository: BalanceRepository,
+    private readonly usersService: UsersService,
     @InjectQueue(BALANCE_JOBS_QUEUE_NAME)
     private readonly balanceQueue: Queue,
   ) {}
@@ -63,5 +69,64 @@ export class BalanceResetService {
       this.logger.warn(`${logMessage} \n${errMessage}`);
       throw new InternalServerErrorException(logMessage);
     }
+  }
+
+  async resetAllUsersBalances() {
+    let batchesProcessed = 0;
+    let usersScanned = 0;
+    let totalAffectedUsersCount = 0;
+    let errorsCount = 0;
+    let cursor: string | undefined;
+
+    while (true) {
+      let users: User[];
+      try {
+        users = await this.usersService.findUserIdsBatch(
+          BALANCE_RESET_BATCH_SIZE,
+          cursor,
+        );
+      } catch (err) {
+        ++errorsCount;
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `Failed to fetch users' ids batch for balance reset: \n${message}`,
+        );
+        break;
+      }
+
+      if (!users.length) {
+        break;
+      }
+
+      ++batchesProcessed;
+      usersScanned += users.length;
+
+      const userIds = users.map(({ id }) => id);
+
+      try {
+        const affectedUsersCount =
+          await this.balanceRepository.resetBalancesByUserIds(userIds);
+        totalAffectedUsersCount += affectedUsersCount;
+      } catch (err) {
+        ++errorsCount;
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `Failed to reset balances for user id batch. firstUserId=${userIds[0]} lastUserId=${userIds.at(-1)} \n${message}`,
+        );
+      }
+
+      cursor = users.at(-1)?.id;
+      if (users.length < BALANCE_RESET_BATCH_SIZE) {
+        break;
+      }
+    }
+
+    this.logger.log(
+      `Balance reset job completed
+      batches processed: ${batchesProcessed}
+      users scanned: ${usersScanned}
+      affected users: ${totalAffectedUsersCount}
+      errors: ${errorsCount}`,
+    );
   }
 }
