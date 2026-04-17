@@ -11,6 +11,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { FilesStorageConfigService, FileStorageModule } from './file-storage';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CacheConfigService } from './cache';
+import { BullMqConfigService } from './job-queue/bullmq-config.service';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -32,6 +34,9 @@ import { CacheConfigService } from './cache';
     CacheModule.registerAsync({
       useClass: CacheConfigService,
       isGlobal: true,
+    }),
+    BullModule.forRootAsync({
+      useClass: BullMqConfigService,
     }),
   ],
 })
