@@ -9,8 +9,8 @@ import { BalanceRepository } from '../repositories';
 import { UsersService } from 'src/users';
 import {
   BALANCE_RESET_BATCH_SIZE,
+  BALANCE_RESET_JOB_CRON_PATTERN,
   BALANCE_JOBS_QUEUE_NAME,
-  BALANCE_RESET_JOB_INTERVAL_MS,
   BALANCE_RESET_JOB_NAME,
   BALANCE_RESET_SCHEDULER_ID,
 } from './balance-jobs-queue.constants';
@@ -32,14 +32,15 @@ export class BalanceResetService {
       await this.balanceQueue.upsertJobScheduler(
         BALANCE_RESET_SCHEDULER_ID,
         {
-          every: BALANCE_RESET_JOB_INTERVAL_MS,
+          pattern: BALANCE_RESET_JOB_CRON_PATTERN,
+          immediately: true,
         },
         {
           name: BALANCE_RESET_JOB_NAME,
         },
       );
       this.logger.log(
-        `Started scheduler "${BALANCE_RESET_SCHEDULER_ID}" for job "${BALANCE_RESET_JOB_NAME}" with ${BALANCE_RESET_JOB_INTERVAL_MS}ms interval`,
+        `Started scheduler "${BALANCE_RESET_SCHEDULER_ID}" for job "${BALANCE_RESET_JOB_NAME}" with cron pattern "${BALANCE_RESET_JOB_CRON_PATTERN}" (immediately=true)`,
       );
     } catch (err) {
       const errMessage = err instanceof Error ? err.message : String(err);
