@@ -46,28 +46,19 @@ export class BalanceRepository {
       .getRawOne<BalanceResponseDto>();
   }
 
-  async resetAllBalances(): Promise<number> {
-    const res = await this.usersRepository
-      .createQueryBuilder()
-      .update(User)
-      .set({ balance: '0.00' })
-      .where(`"deletedAt" IS NULL`)
-      .execute();
-
-    return res.affected ?? 0;
-  }
-
   async resetBalancesByUserIds(userIds: string[]): Promise<number> {
     if (!userIds.length) {
       return 0;
     }
 
+    const zeroBalance = '0.00';
     const res = await this.usersRepository
       .createQueryBuilder()
       .update(User)
-      .set({ balance: '0.00' })
+      .set({ balance: zeroBalance })
       .where('id IN (:...userIds)', { userIds })
       .andWhere(`"deletedAt" IS NULL`)
+      .andWhere('balance != :zeroBalance', { zeroBalance })
       .execute();
 
     return res.affected ?? 0;
