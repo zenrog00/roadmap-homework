@@ -2,6 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -12,13 +14,22 @@ import { BalanceRepository, BalanceOperationsRepository } from './repositories';
 import { UsersService } from '../users.service';
 import { Transactional } from 'typeorm-transactional';
 import { BalanceResponseDto } from './dtos';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class BalanceService {
+  private readonly logger = new Logger(BalanceService.name);
+
+  private readonly balanceJobSchedulerName = 'balance';
+  private readonly balanceResetJobName = 'reset-global';
+  private readonly balanceResetJobIntervalMs = 10 * 60 * 1000; // 10 min
+
   constructor(
     private readonly balanceRepository: BalanceRepository,
     private readonly balanceOperationsRepository: BalanceOperationsRepository,
     private readonly usersService: UsersService,
+    @InjectQueue('balance') private readonly balanceQueue: Queue,
   ) {}
 
   @Transactional()
@@ -110,6 +121,28 @@ export class BalanceService {
       throw new NotFoundException("User's not found!");
     }
     return balance;
+  }
+
+  async startBalanceResetJob() {
+    try {
+      await this.balanceQueue.upsertJobScheduler(
+        this.balanceJobSchedulerName,
+        {
+          every: this.balanceResetJobIntervalMs,
+        },
+        {
+          name: this.balanceResetJobName,
+        },
+      );
+      this.logger.log(
+        `Created repeatable job for resetting users' balances with ${this.balanceResetJobIntervalMs}ms interval`,
+      );
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+      const logMessage = `Failed to create repeatable job for resetting user's balances`;
+      this.logger.warn(`${logMessage} \n${errMessage}`);
+      throw new InternalServerErrorException(logMessage);
+    }
   }
 
   private async applyIdempotentBalanceOperation({

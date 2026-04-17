@@ -6,10 +6,18 @@ import { User } from '../entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BalanceOperation } from './entities';
 import { BalanceRepository, BalanceOperationsRepository } from './repositories';
+import { BalanceResetController } from './balance-jobs-queue';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, BalanceOperation]), UsersModule],
-  controllers: [BalanceController],
+  imports: [
+    TypeOrmModule.forFeature([User, BalanceOperation]),
+    BullModule.registerQueue({
+      name: 'balance',
+    }),
+    UsersModule,
+  ],
+  controllers: [BalanceController, BalanceResetController],
   providers: [BalanceService, BalanceRepository, BalanceOperationsRepository],
 })
 export class BalanceModule {}
