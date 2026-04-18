@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -10,6 +11,14 @@ import {
   initializeTransactionalContext,
   StorageDriver,
 } from 'typeorm-transactional';
+
+// No-op cache used in e2e tests so that responses are never served from
+// cache and tests remain deterministic regardless of execution order.
+const noopCacheManager = {
+  get: () => Promise.resolve(undefined),
+  set: <T>(_key: string, value: T) => Promise.resolve(value),
+  del: () => Promise.resolve(true),
+} as unknown as Cache;
 
 // getting config from env variables that were setup in global-setup
 const typeOrmOptions: TypeOrmModuleOptions = {
@@ -40,6 +49,8 @@ export async function testingAppSetup() {
     .useValue({
       createTypeOrmOptions: () => typeOrmOptions,
     })
+    .overrideProvider(CACHE_MANAGER)
+    .useValue(noopCacheManager)
     .compile();
 
   const app = moduleFixture.createNestApplication<NestExpressApplication>();
