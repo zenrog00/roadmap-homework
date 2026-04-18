@@ -113,13 +113,18 @@ export class UsersService {
     try {
       const { password } = userDto;
       const hashedPassword = await createHash(password);
-      const savedUser = await this.usersRepository.save({
+      await this.usersRepository.save({
         ...userDto,
         id: userId,
         password: hashedPassword,
       });
 
-      await this.saveUserToCache(savedUser);
+      const updatedUser = await this.usersRepository.findOneBy({ id: userId });
+      if (updatedUser) {
+        await this.saveUserToCache(updatedUser);
+      } else {
+        await this.invalidateUserCache(userId);
+      }
     } catch (err) {
       if (
         isDatabaseError(err) &&
