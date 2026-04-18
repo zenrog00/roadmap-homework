@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -15,6 +16,8 @@ import { BalanceResponseDto } from './dtos';
 
 @Injectable()
 export class BalanceService {
+  private readonly logger = new Logger(BalanceService.name);
+
   constructor(
     private readonly balanceRepository: BalanceRepository,
     private readonly balanceOperationsRepository: BalanceOperationsRepository,
@@ -36,9 +39,13 @@ export class BalanceService {
       amount,
     });
     if (!balance) {
+      this.logger.warn(`Deposit failed: user not found userId=${userId}`);
       throw new NotFoundException("User's not found!");
     }
 
+    this.logger.log(
+      `Deposit applied userId=${userId} amount=${amount} idempotencyKey=${idempotencyKey}`,
+    );
     return balance;
   }
 
@@ -59,11 +66,18 @@ export class BalanceService {
     if (!balance) {
       const user = await this.usersService.findOneBy({ id: userId });
       if (!user) {
+        this.logger.warn(`Withdrawal failed: user not found userId=${userId}`);
         throw new NotFoundException("User's not found!");
       }
+      this.logger.warn(
+        `Withdrawal rejected: insufficient balance userId=${userId} amount=${amount} idempotencyKey=${idempotencyKey}`,
+      );
       throw new BadRequestException('Insufficient balance!');
     }
 
+    this.logger.log(
+      `Withdrawal applied userId=${userId} amount=${amount} idempotencyKey=${idempotencyKey} counterpartyUserId=${counterpartyUserId}`,
+    );
     return balance;
   }
 
@@ -75,6 +89,9 @@ export class BalanceService {
     idempotencyKey: string,
   ): Promise<BalanceResponseDto> {
     if (userId === counterpartyUserId) {
+      this.logger.warn(
+        `Transfer rejected: sender and recipient are the same userId=${userId}`,
+      );
       throw new BadRequestException('Cannot transfer to yourself!');
     }
 
@@ -96,11 +113,17 @@ export class BalanceService {
       );
     } catch (err) {
       if (err instanceof NotFoundException) {
+        this.logger.warn(
+          `Transfer failed: recipient not found senderUserId=${userId} counterpartyUserId=${counterpartyUserId} amount=${amount}`,
+        );
         throw new NotFoundException('Recipient user not found!');
       }
       throw err;
     }
 
+    this.logger.log(
+      `Transfer completed fromUserId=${userId} toUserId=${counterpartyUserId} amount=${amount} idempotencyKey=${idempotencyKey}`,
+    );
     return senderBalance;
   }
 
@@ -142,6 +165,9 @@ export class BalanceService {
         this.normalizeAmount(existingOperation.amount) === normalizedAmount &&
         existingOperation.counterpartyUserId === counterpartyUserId;
       if (!hasSamePayload) {
+        this.logger.warn(
+          `Idempotency conflict userId=${userId} key=${idempotencyKey}: replay with different payload (existing type=${existingOperation.operationType})`,
+        );
         throw new ConflictException(
           'Idempotency key already used with different payload!',
         );
