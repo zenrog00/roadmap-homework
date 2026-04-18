@@ -28,7 +28,7 @@ export class BalanceOperation {
   @PrimaryColumn('uuid')
   idempotencyKey: string;
 
-  @Column()
+  @Column({ type: 'varchar', length: 32 })
   operationType: BalanceOperationType;
 
   @Column({
