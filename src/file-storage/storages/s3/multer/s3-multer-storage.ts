@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { StorageEngine } from 'multer';
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
@@ -9,6 +10,8 @@ import { StorageFileInfo } from '../../multer-utils';
 import { S3MulterStorageOptions } from './s3-multer-storage.options';
 
 class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
+  private readonly logger = new Logger('S3MulterStorage');
+
   constructor(options: S3MulterStorageOptions) {
     super(options);
   }
@@ -47,9 +50,18 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
         key: `${bucket}/${filename}`,
       };
 
-      console.log('Uploaded file to S3');
+      this.logger.log(
+        `Uploaded object to S3 bucket="${bucket}" key="${filename}" size=${size} bytes`,
+      );
       cb(null, info);
-    })().catch(cb);
+    })().catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `S3 multipart upload failed: ${message}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      cb(err);
+    });
   }
 
   _removeFile(
@@ -57,7 +69,6 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
     file: Express.Multer.File,
     cb: (error: Error | null) => void,
   ): void {
-    console.log('Removing file from S3');
     (async () => {
       const { key } = file as StorageFileInfo;
 
@@ -66,6 +77,9 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
       const fileKey = firstSlashIdx === -1 ? '' : key.slice(firstSlashIdx + 1);
 
       if (!bucket || !fileKey) {
+        this.logger.warn(
+          `S3 remove skipped: invalid key format (expected "bucket/key", got "${key}")`,
+        );
         cb(null);
         return;
       }
@@ -77,8 +91,18 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
         }),
       );
 
+      this.logger.log(
+        `Deleted object from S3 bucket="${bucket}" key="${fileKey}"`,
+      );
       cb(null);
-    })().catch(cb);
+    })().catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `S3 delete object failed: ${message}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      cb(err as Error);
+    });
   }
 }
 
