@@ -133,7 +133,7 @@ export class FileStorageCoreModule {
         }
         if (storageOptions.driver !== source.driver) {
           throw new Error(
-            `File storage namespace "${ns}" uses driver "${storageOptions.driver}" but references client from "${ref}" which uses driver "${source.driver}"`,
+            `File storage namespace "${ns}" uses driver "${String(storageOptions.driver)}" but references client from "${ref}" which uses driver "${String(source.driver)}"`,
           );
         }
       }
