@@ -70,7 +70,7 @@ describe('AUTH', () => {
           id: expect.stringMatching(uuidRegex) as string,
           username: userDto.username,
           email: userDto.email,
-          birthdate: userDto.birthdate.toISOString().split('T')[0],
+          birthdate: userDto.birthdate,
           description: userDto.description,
         });
       });
