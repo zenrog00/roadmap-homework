@@ -21,6 +21,7 @@ import {
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { GetMostActiveUsersResponseDto } from './dtos/get-most-active-users-response.dto';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { toUserMyResponseDto } from './dtos/user-response.mapper';
 
 @Controller()
 export class UsersController {
@@ -43,8 +44,7 @@ export class UsersController {
       throw new NotFoundException("User's data not found!");
     }
 
-    const { password, ...userData } = user;
-    return userData;
+    return toUserMyResponseDto(user);
   }
 
   @Get()
