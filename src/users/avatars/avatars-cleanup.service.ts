@@ -21,6 +21,7 @@ export class AvatarsCleanupService {
   // every day at midnight Moscow
   @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
   private async deleteSoftDeletedAvatars() {
+    this.logger.log('Starting scheduled job: hard-delete soft-deleted avatars');
     let totalProcessed = 0;
     let storageDeleted = 0;
     const databaseDeleted = 0;
@@ -85,6 +86,9 @@ export class AvatarsCleanupService {
   // every sunday at 03:00 Moscow
   @Cron('0 3 * * 0', { timeZone: 'Europe/Moscow' })
   private async deleteOrphanStorageAvatars() {
+    this.logger.log(
+      'Starting scheduled job: remove orphan avatar objects from storage',
+    );
     let scanned = 0;
     let orphanDeleted = 0;
     let skippedRecent = 0;

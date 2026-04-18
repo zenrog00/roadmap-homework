@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -15,6 +16,7 @@ import { UsersService } from '../users.service';
 
 @Injectable()
 export class AvatarsService {
+  private readonly logger = new Logger(AvatarsService.name);
   private readonly AVATAR_COUNT_LIMIT = 5;
 
   constructor(
@@ -38,6 +40,9 @@ export class AvatarsService {
     const userAvatarsCount =
       await this.usersAvatarsRepository.countUserAvatars(userId);
     if (userAvatarsCount >= this.AVATAR_COUNT_LIMIT) {
+      this.logger.warn(
+        `Avatar upload rejected: user ${userId} already has ${userAvatarsCount} avatars (limit ${this.AVATAR_COUNT_LIMIT})`,
+      );
       throw new ForbiddenException(
         `You can't have more than ${this.AVATAR_COUNT_LIMIT} avatars!`,
       );
@@ -54,6 +59,10 @@ export class AvatarsService {
       avatarId,
     });
 
+    this.logger.log(
+      `Avatar saved for user ${userId}: avatarId=${avatarId} size=${size} mimetype=${mimetype}`,
+    );
+
     return avatarId;
   }
 
@@ -68,15 +77,25 @@ export class AvatarsService {
       avatarId,
     );
     if (userAvatarCount < 1) {
+      this.logger.warn(
+        `Avatar download URL requested for missing avatar userId=${userId} avatarId=${avatarId}`,
+      );
       throw new NotFoundException('Avatar was not found!');
     }
 
     const avatarKey = `${userId}/${avatarId}`;
 
-    return await this.fileStorageService.getFileDownloadUrl(avatarKey);
+    const url = await this.fileStorageService.getFileDownloadUrl(avatarKey);
+    this.logger.log(
+      `Issued avatar download URL for userId=${userId} avatarId=${avatarId}`,
+    );
+    return url;
   }
 
   async deleteMyAvatar(userId: string, avatarId: string) {
     await this.avatarsRepository.softDeleteUserAvatar(userId, avatarId);
+    this.logger.log(
+      `Avatar soft-deleted for userId=${userId} avatarId=${avatarId}`,
+    );
   }
 }
