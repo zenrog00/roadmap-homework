@@ -19,6 +19,8 @@ export class BalanceJobsQueueProcessor extends WorkerHost {
       return;
     }
 
+    this.logger.log(`Balance queue job started id=${job.id} name=${job.name}`);
     await this.balanceResetService.resetAllUsersBalances();
+    this.logger.log(`Balance queue job finished id=${job.id} name=${job.name}`);
   }
 }
