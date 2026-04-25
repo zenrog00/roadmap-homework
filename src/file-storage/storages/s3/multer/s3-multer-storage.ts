@@ -22,9 +22,11 @@ class S3StorageEngine extends MulterStorageTemplate<S3MulterStorageOptions> {
     cb: (error?: any, info?: Partial<Express.Multer.File>) => void,
   ): void {
     (async () => {
-      const bucket = await this.resolveOption('bucket', req, file);
-      const filename = await this.resolveOption('filename', req, file);
-      const filetypes = await this.resolveOption('filetypes', req, file);
+      const [bucket, filename, filetypes] = await Promise.all([
+        this.resolveOption('bucket', req, file),
+        this.resolveOption('filename', req, file),
+        this.resolveOption('filetypes', req, file),
+      ]);
 
       const { uploadStream: validatedUploadStream } =
         await validateFiletypeFromStream(file.stream, filetypes);
