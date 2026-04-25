@@ -1,7 +1,8 @@
-export const BALANCE_OPERATION_TYPES = [
-  'deposit',
-  'withdrawal',
-  'transfer',
-] as const;
+export const BALANCE_OPERATION = {
+  DEPOSIT: 'deposit',
+  WITHDRAWAL: 'withdrawal',
+  TRANSFER: 'transfer',
+} as const;
 
-export type BalanceOperationType = (typeof BALANCE_OPERATION_TYPES)[number];
+export type BalanceOperation =
+  (typeof BALANCE_OPERATION)[keyof typeof BALANCE_OPERATION];

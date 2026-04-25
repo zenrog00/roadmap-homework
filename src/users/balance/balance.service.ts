@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   ApplyIdempotentBalanceOperationInput,
+  BALANCE_OPERATION,
   SaveSuccessfulOperationInput,
 } from './types';
 import { BalanceRepository, BalanceOperationsRepository } from './repositories';
@@ -146,7 +147,7 @@ export class BalanceService {
   > {
     const normalizedAmount = this.normalizeAmount(amount);
     const delta =
-      operationType === 'withdrawal'
+      operationType === BALANCE_OPERATION.WITHDRAWAL
         ? `-${normalizedAmount}`
         : normalizedAmount;
 

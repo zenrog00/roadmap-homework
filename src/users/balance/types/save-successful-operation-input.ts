@@ -1,10 +1,10 @@
-import type { BalanceOperationType } from './balance-operation-type';
+import type { BalanceOperation } from './balance-operation-type';
 
 export type SaveSuccessfulOperationInput = {
   userId: string;
   counterpartyUserId: string;
   idempotencyKey: string;
-  operationType: BalanceOperationType;
+  operationType: BalanceOperation;
   amount: string;
   resultBalance: string;
 };
