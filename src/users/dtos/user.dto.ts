@@ -24,7 +24,7 @@ export class UserDto {
     format: 'date',
   })
   @IsDateString()
-  birthdate: Date;
+  birthdate: string;
 
   @MaxLength(1000)
   description: string;

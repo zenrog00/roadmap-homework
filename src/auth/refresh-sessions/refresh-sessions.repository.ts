@@ -1,5 +1,5 @@
 import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
-import { RefreshSession } from './entities';
+import { RefreshSession } from '../entities';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

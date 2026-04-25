@@ -1,13 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { compareWithHash, createHash } from 'src/common/utils/hash';
 import { FindOptionsWhere, LessThan } from 'typeorm';
-import { RefreshSession } from './entities';
-import { AUTH_MODULE_OPTIONS } from './auth.module-definition';
-import type { AuthModuleOptions } from './auth.module-options';
-import { UsersService } from 'src/users/users.service';
+import { RefreshSession } from '../entities';
+import { AUTH_MODULE_OPTIONS } from '../auth.module-definition';
+import type { AuthModuleOptions } from '../auth.module-options';
+import { UsersService } from 'src/users/';
 import { Transactional } from 'typeorm-transactional';
 import { Cron } from '@nestjs/schedule';
 import { RefreshSessionsRepository } from './refresh-sessions.repository';
+import { DELETE_EXPIRED_JOB_CRON_PATTERN } from './refresh-sessions.constants';
 
 @Injectable()
 export class RefreshSessionsService {
@@ -18,8 +19,7 @@ export class RefreshSessionsService {
     private readonly authModuleOptions: AuthModuleOptions,
   ) {}
 
-  // every day at 01:00 Moscow
-  @Cron('0 1 * * *', {
+  @Cron(DELETE_EXPIRED_JOB_CRON_PATTERN, {
     timeZone: 'Europe/Moscow',
   })
   private async deleteExpiredSessions() {

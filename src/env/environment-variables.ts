@@ -36,7 +36,37 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   JWT_SECRET: string;
 
-  ACCESS_TOKEN_EXPIRES_IN: StringValue = '15m';
+  ACCESS_TOKEN_EXPIRES_IN: StringValue = '300m';
   REFRESH_TOKEN_EXPIRES_IN: StringValue = '30d';
   MAX_USER_SESSIONS = 5;
+
+  @IsNotEmpty()
+  @IsUrl({ require_tld: false })
+  MINIO_HOST: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(65535)
+  MINIO_PORT: number;
+
+  @IsNotEmpty()
+  MINIO_ROOT_USER: string;
+
+  @IsNotEmpty()
+  MINIO_ROOT_PASSWORD: string;
+
+  @IsNotEmpty()
+  MINIO_USERS_AVATARS_BUCKET: string;
+
+  @IsNotEmpty()
+  @IsUrl({ require_tld: false })
+  REDIS_HOST: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(65535)
+  REDIS_PORT: number;
+
+  @IsNotEmpty()
+  REDIS_PASSWORD: string;
 }

@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
 
-@Entity()
+@Entity({ name: 'refresh_sessions' })
 export class RefreshSession {
   @PrimaryColumn('uuid')
   id: string;
