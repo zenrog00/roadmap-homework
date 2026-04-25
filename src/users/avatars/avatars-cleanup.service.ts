@@ -3,6 +3,10 @@ import { FileStorageService, InjectFileStorageService } from 'src/file-storage';
 import { AvatarsRepository } from './repositories';
 import { UsersService } from '../users.service';
 import { Cron } from '@nestjs/schedule';
+import {
+  ORPHAN_CLEANUP_JOB_CRON_PATTERN,
+  SOFT_DELETE_CLEANUP_JOB_CRON_PATTERN,
+} from './avatars.constants';
 
 @Injectable()
 export class AvatarsCleanupService {
@@ -18,8 +22,7 @@ export class AvatarsCleanupService {
     private readonly usersService: UsersService,
   ) {}
 
-  // every day at midnight Moscow
-  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
+  @Cron(SOFT_DELETE_CLEANUP_JOB_CRON_PATTERN, { timeZone: 'Europe/Moscow' })
   private async deleteSoftDeletedAvatars() {
     this.logger.log('Starting scheduled job: hard-delete soft-deleted avatars');
     let totalProcessed = 0;
@@ -83,8 +86,7 @@ export class AvatarsCleanupService {
       errors: ${errorsCount}`);
   }
 
-  // every sunday at 03:00 Moscow
-  @Cron('0 3 * * 0', { timeZone: 'Europe/Moscow' })
+  @Cron(ORPHAN_CLEANUP_JOB_CRON_PATTERN, { timeZone: 'Europe/Moscow' })
   private async deleteOrphanStorageAvatars() {
     this.logger.log(
       'Starting scheduled job: remove orphan avatar objects from storage',
