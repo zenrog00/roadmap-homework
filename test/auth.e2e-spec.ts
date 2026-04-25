@@ -8,7 +8,7 @@ import {
   expectValidAccessTokenResponse,
   expectValidRefreshTokenCookie,
 } from './utils/assertions/auth.assertions';
-import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
+import { RefreshSessionsService } from 'src/auth/refresh-sessions';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
 import { extractRefreshToken } from './utils/auth';
