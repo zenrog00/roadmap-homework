@@ -14,6 +14,7 @@ import { UsersRepository } from './users.repository';
 import { isDatabaseError } from 'src/database/utils';
 import { buildCursorPaginationResult } from 'src/common/utils/cursor-pagination/cursor-pagination';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { SOFT_DELETE_CLEANUP_JOB_CRON_PATTERN } from './users.constants';
 
 @Injectable()
 export class UsersService {
@@ -26,8 +27,7 @@ export class UsersService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  // every day at 01:00 Moscow
-  @Cron('0 1 * * *', { timeZone: 'Europe/Moscow' })
+  @Cron(SOFT_DELETE_CLEANUP_JOB_CRON_PATTERN, { timeZone: 'Europe/Moscow' })
   private async deleteSoftDeletedUsers() {
     const oneWeekAgo = "now() - interval '7 days'";
     await this.usersRepository.deleteSoftDeletedUsers(oneWeekAgo);
