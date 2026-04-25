@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserDto } from 'src/users/dtos';
 import { UsersService } from 'src/users/';
 import { Transactional } from 'typeorm-transactional';
-import { RefreshSessionsService } from './refresh-sessions.service';
+import { RefreshSessionsService } from './refresh-sessions';
 import { compareWithHash } from 'src/common/utils/hash';
 import { randomUUID } from 'node:crypto';
 
