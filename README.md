@@ -12,6 +12,10 @@ Pet project with creating web app in NestJS.
 * TypeOrm
 * Passport
 * Swagger
+* AWS3 SDK
+* Minio
+* Redis
+* BullMQ
 
 ### Setup
 To setup this project you need to create .env file in project root with contents of .env.example file and fill it with your configuration.

@@ -9,10 +9,10 @@ import { UsersModule } from 'src/users';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RefreshSession } from './entities';
 import { JwtStrategy, LocalStrategy } from './strategies';
-import { RefreshSessionsService } from './refresh-sessions.service';
+import { RefreshSessionsService } from './refresh-sessions';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards';
-import { RefreshSessionsRepository } from './refresh-sessions.repository';
+import { RefreshSessionsRepository } from './refresh-sessions';
 
 @Module({
   imports: [

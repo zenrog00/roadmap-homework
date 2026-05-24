@@ -1,7 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import { AxiosInstance, AxiosResponse } from 'axios';
 import { axiosInstanceSetup, getAppPort, testingAppSetup } from './utils/setup';
-import { GetUsersResponseDto, UserDto, UserResponseDto } from 'src/users/dtos';
+import {
+  GetUsersResponseDto,
+  UserDto,
+  UserMyResponseDto,
+  UserResponseDto,
+} from 'src/users/dtos';
 import { generateUserDto } from './utils/users';
 import { uuidRegex } from './utils/regex';
 import { extractRefreshToken } from './utils/auth';
@@ -38,7 +43,7 @@ describe('USERS', () => {
 
   describe('GET /users/my', () => {
     it('should return curent user data', async () => {
-      const userResponse = await api.get<UserResponseDto>('users/my', {
+      const userResponse = await api.get<UserMyResponseDto>('users/my', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       expect(userResponse.status).toBe(200);
@@ -46,13 +51,14 @@ describe('USERS', () => {
         id: expect.stringMatching(uuidRegex) as string,
         username: userDto.username,
         email: userDto.email,
-        birthdate: userDto.birthdate.toISOString().split('T')[0],
+        birthdate: userDto.birthdate,
         description: userDto.description,
+        balance: '0.00',
       });
     });
 
     it('should return 401 for invalid accessToken', async () => {
-      const userResponse = await api.get<UserResponseDto>('users/my', {
+      const userResponse = await api.get<UserMyResponseDto>('users/my', {
         headers: { Authorization: `Bearer ${accessToken}_wrong` },
       });
       expect(userResponse.status).toBe(401);
@@ -109,7 +115,7 @@ describe('USERS', () => {
           id: expect.stringMatching(uuidRegex) as string,
           username: userDto.username,
           email: userDto.email,
-          birthdate: userDto.birthdate.toISOString().split('T')[0],
+          birthdate: userDto.birthdate,
           description: userDto.description,
         });
       });
@@ -229,16 +235,20 @@ describe('USERS', () => {
 
         expect(userUpdateResponse.status).toBe(200);
 
-        const { data: userData } = await api.get<UserResponseDto>('users/my', {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        const { data: userData } = await api.get<UserMyResponseDto>(
+          'users/my',
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        );
 
         expect(userData).toEqual({
           id: userId,
           username: newUserDto.username,
           email: newUserDto.email,
-          birthdate: userDto.birthdate.toISOString().split('T')[0],
+          birthdate: userDto.birthdate,
           description: userDto.description,
+          balance: '0.00',
         });
       });
 
@@ -279,9 +289,12 @@ describe('USERS', () => {
 
     describe('invalid user data', () => {
       it('should return 401 for invalid accessToken', async () => {
-        const updateUserResponse = await api.get<UserResponseDto>('users/my', {
-          headers: { Authorization: `Bearer ${accessToken}_wrong` },
-        });
+        const updateUserResponse = await api.get<UserMyResponseDto>(
+          'users/my',
+          {
+            headers: { Authorization: `Bearer ${accessToken}_wrong` },
+          },
+        );
         expect(updateUserResponse.status).toBe(401);
       });
 

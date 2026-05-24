@@ -4,10 +4,15 @@ import { validate } from './env';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './database/typeorm-config-service';
 import { AuthModule, AuthModuleOptionsFactory } from './auth';
-import { UsersModule } from './users/users.module';
+import { UsersRouterModule } from './users';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { FilesStorageConfigService, FileStorageModule } from './file-storage';
+import { CacheModule } from '@nestjs/cache-manager';
+import { CacheConfigService } from './cache';
+import { BullMqConfigService } from './job-queue/bullmq-config.service';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -22,7 +27,17 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     ScheduleModule.forRoot(),
     AuthModule.forRootAsync({ useClass: AuthModuleOptionsFactory }),
-    UsersModule,
+    UsersRouterModule,
+    FileStorageModule.forRootAsync({
+      useClass: FilesStorageConfigService,
+    }),
+    CacheModule.registerAsync({
+      useClass: CacheConfigService,
+      isGlobal: true,
+    }),
+    BullModule.forRootAsync({
+      useClass: BullMqConfigService,
+    }),
   ],
 })
 export class AppModule {}

@@ -1,19 +1,33 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { GetUsersQueryDto, UserDto } from './dtos';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { GetMostActiveUsersQueryDto, GetUsersQueryDto, UserDto } from './dtos';
 import { User } from './entities';
 import { FindOptionsWhere } from 'typeorm';
-import { PostgresErrorCode } from 'src/database/postgres-error-code';
+import { PostgresErrorCode } from 'src/database/utils/postgres-error-code';
 import { createHash } from 'src/common/utils/hash';
 import { Cron } from '@nestjs/schedule';
 import { UsersRepository } from './users.repository';
-import { isDatabaseError } from 'src/database/database-error';
+import { isDatabaseError } from 'src/database/utils';
+import { buildCursorPaginationResult } from 'src/common/utils/cursor-pagination/cursor-pagination';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { SOFT_DELETE_CLEANUP_JOB_CRON_PATTERN } from './users.constants';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  private readonly logger = new Logger(UsersService.name);
+  private readonly cachePrefix = 'users';
+  private readonly cacheTtl = 30 * 1000; // 30 seconds
 
-  // every day at midnight Moscow
-  @Cron('0 0 * * *', { timeZone: 'Europe/Moscow' })
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
+
+  @Cron(SOFT_DELETE_CLEANUP_JOB_CRON_PATTERN, { timeZone: 'Europe/Moscow' })
   private async deleteSoftDeletedUsers() {
     const oneWeekAgo = "now() - interval '7 days'";
     await this.usersRepository.deleteSoftDeletedUsers(oneWeekAgo);
@@ -29,6 +43,9 @@ export class UsersService {
         password: hashedPassword,
       });
       const { id } = await this.usersRepository.save(user);
+
+      await this.saveUserToCache(user);
+
       return id;
     } catch (err) {
       if (
@@ -45,36 +62,47 @@ export class UsersService {
   }
 
   async findOneBy(opts: FindOptionsWhere<User>) {
-    return await this.usersRepository.findOneBy(opts);
+    const cache = await this.getUserFromCache(opts);
+    if (cache) {
+      return cache;
+    }
+
+    const user = await this.usersRepository.findOneBy(opts);
+    if (user) {
+      await this.saveUserToCache(user);
+    }
+
+    return user;
   }
 
-  async findAll(getUsetsQueryDto: GetUsersQueryDto) {
-    const users = await this.usersRepository.findAll(getUsetsQueryDto);
+  async findAll(getUsersQueryDto: GetUsersQueryDto) {
+    const users = await this.usersRepository.findAll(getUsersQueryDto);
 
-    const { cursor, limit, isPrevious } = getUsetsQueryDto;
+    const { cursor, limit, isPrevious } = getUsersQueryDto;
+    return buildCursorPaginationResult(users, {
+      limit,
+      cursor,
+      isPrevious,
+      getCursor: (user) => user.id,
+    });
+  }
 
-    const hasMore = users.length > limit;
-    if (hasMore) {
-      users.pop();
-    }
+  async findMostActive(getMostActiveUsersQueryDto: GetMostActiveUsersQueryDto) {
+    const mostActiveUsers = await this.usersRepository.findMostActive(
+      getMostActiveUsersQueryDto,
+    );
 
-    const data = isPrevious ? users.reverse() : users;
+    const { cursor, limit, isPrevious } = getMostActiveUsersQueryDto;
+    return buildCursorPaginationResult(mostActiveUsers, {
+      limit,
+      cursor,
+      isPrevious,
+      getCursor: (user) => user.id,
+    });
+  }
 
-    let nextCursor: string | undefined;
-    let prevCursor: string | undefined;
-    if (isPrevious) {
-      prevCursor = hasMore ? data[0]?.id : undefined;
-      nextCursor = data.at(-1)?.id;
-    } else {
-      nextCursor = hasMore ? data.at(-1)?.id : undefined;
-      prevCursor = cursor && data.at(0)?.id;
-    }
-
-    return {
-      data,
-      nextCursor,
-      prevCursor,
-    };
+  async findUserIdsBatch(limit: number, cursor?: string) {
+    return this.usersRepository.findUserIdsBatch(limit, cursor);
   }
 
   async lockUserForUpdate(userId: string) {
@@ -90,6 +118,13 @@ export class UsersService {
         id: userId,
         password: hashedPassword,
       });
+
+      const updatedUser = await this.usersRepository.findOneBy({ id: userId });
+      if (updatedUser) {
+        await this.saveUserToCache(updatedUser);
+      } else {
+        await this.invalidateUserCache(userId);
+      }
     } catch (err) {
       if (
         isDatabaseError(err) &&
@@ -107,6 +142,66 @@ export class UsersService {
   }
 
   async deleteUser(userId: string) {
-    await this.usersRepository.softDelete(userId);
+    await this.usersRepository.softDeleteUser(userId);
+    await this.invalidateUserCache(userId);
+  }
+
+  private async getUserFromCache(
+    user: string | FindOptionsWhere<User>,
+  ): Promise<User | undefined> {
+    let userId: string;
+
+    if (typeof user === 'string') {
+      userId = user;
+    } else if ('id' in user && typeof user.id === 'string') {
+      userId = user.id;
+    } else {
+      return;
+    }
+
+    const key = this.buildUserCacheKey(userId);
+
+    try {
+      const value = await this.cacheManager.get<User>(key);
+
+      if (value) {
+        this.logger.log(`Cache hit on user ${key}`);
+      } else {
+        this.logger.log(`Cache miss on user ${key}`);
+      }
+
+      return value;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Error while getting cache of user ${key} \n${message}`);
+    }
+  }
+
+  private async saveUserToCache(user: User) {
+    const key = this.buildUserCacheKey(user.id);
+
+    try {
+      await this.cacheManager.set(key, user, this.cacheTtl);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Error while saving cache of user ${key} \n${message}`);
+    }
+  }
+
+  private async invalidateUserCache(userId: string) {
+    const key = this.buildUserCacheKey(userId);
+
+    try {
+      await this.cacheManager.del(key);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Error while invalidating cache of user ${key} \n${message}`,
+      );
+    }
+  }
+
+  private buildUserCacheKey(userId: string) {
+    return `${this.cachePrefix}/${userId}`;
   }
 }

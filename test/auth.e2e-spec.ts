@@ -8,7 +8,7 @@ import {
   expectValidAccessTokenResponse,
   expectValidRefreshTokenCookie,
 } from './utils/assertions/auth.assertions';
-import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
+import { RefreshSessionsService } from 'src/auth/refresh-sessions';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from 'src/env';
 import { extractRefreshToken } from './utils/auth';
@@ -70,7 +70,7 @@ describe('AUTH', () => {
           id: expect.stringMatching(uuidRegex) as string,
           username: userDto.username,
           email: userDto.email,
-          birthdate: userDto.birthdate.toISOString().split('T')[0],
+          birthdate: userDto.birthdate,
           description: userDto.description,
         });
       });

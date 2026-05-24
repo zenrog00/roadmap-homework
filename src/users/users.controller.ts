@@ -6,19 +6,27 @@ import {
   NotFoundException,
   Put,
   Query,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from 'src/common/decorators';
 import {
+  GetMostActiveUsersQueryDto,
   GetUsersQueryDto,
   GetUsersResponseDto,
   UserDto,
-  UserResponseDto,
+  UserMyResponseDto,
 } from './dtos';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { GetMostActiveUsersResponseDto } from './dtos/get-most-active-users-response.dto';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import {
+  toUserMyResponseDto,
+  toUserResponseDto,
+} from './dtos/user-response.mapper';
 
-@Controller('users')
+@Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -28,21 +36,23 @@ export class UsersController {
   })
   @ApiBearerAuth()
   @ApiOkResponse({
-    type: UserResponseDto,
+    type: UserMyResponseDto,
     description: 'Current user data',
   })
-  async getMyUser(@User('id') userId: string): Promise<UserResponseDto> {
+  async getMyUser(@User('id') userId: string): Promise<UserMyResponseDto> {
     const user = await this.usersService.findOneBy({
       id: userId,
     });
     if (!user) {
       throw new NotFoundException("User's data not found!");
     }
-    const { password, ...userData } = user;
-    return userData;
+
+    return toUserMyResponseDto(user);
   }
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30 * 1000) // 30 seconds
   @ApiOperation({
     summary: 'Get cursor paginated users data with optional username filter',
   })
@@ -59,9 +69,26 @@ export class UsersController {
       throw new NotFoundException("User's data not found!");
     }
     return {
-      data,
+      data: data.map(toUserResponseDto),
       ...cursors,
     };
+  }
+
+  @Get('most-active')
+  @ApiOperation({
+    summary:
+      'Get cursor paginated most active users data with optional ageFrom and ageTo filters',
+  })
+  @ApiBearerAuth()
+  @ApiOkResponse({
+    type: GetMostActiveUsersResponseDto,
+    description: 'Cursor paginated most active users data',
+  })
+  async getMostActiveUsers(
+    @Query(new ValidationPipe({ transform: true }))
+    query: GetMostActiveUsersQueryDto,
+  ): Promise<GetMostActiveUsersResponseDto> {
+    return await this.usersService.findMostActive(query);
   }
 
   @ApiOperation({
@@ -84,7 +111,6 @@ export class UsersController {
     summary: 'Soft deletes current user',
   })
   @ApiBearerAuth()
-  @Put('my')
   @ApiOkResponse({
     description: 'Current user was soft deleted',
   })

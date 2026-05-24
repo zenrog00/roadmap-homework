@@ -2,7 +2,7 @@ import { AxiosResponse } from 'axios';
 import { jwtRegex, uuidRegex } from '../regex';
 import * as cookie from 'cookie';
 import { INestApplication } from '@nestjs/common';
-import { RefreshSessionsService } from 'src/auth/refresh-sessions.service';
+import { RefreshSessionsService } from 'src/auth/refresh-sessions';
 import { AuthResponseDto } from 'src/auth/dtos';
 
 export const expectValidAccessTokenResponse = (

@@ -8,7 +8,7 @@ export function generateUserDto(): UserDto {
     username: `user_${randomId}}`,
     email: `${randomId}}@yahoo.com`,
     password: 'test_pass',
-    birthdate: new Date(),
+    birthdate: new Date().toISOString().split('T')[0],
     description: '',
   };
 }
